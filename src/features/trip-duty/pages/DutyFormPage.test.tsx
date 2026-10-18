@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
+import { addDays, istParts } from '@/lib/time'
 import { DutyFormPage } from './DutyFormPage'
 
 vi.mock('@/features/vehicles/api', () => ({
@@ -41,6 +42,13 @@ describe('Start duty form', () => {
     expect(screen.getByRole('status')).toHaveTextContent(/lower than the last closing KM \(1520\)/)
   })
 
+  it('offers the driver’s own car and then needs no KM', async () => {
+    setup()
+    expect(screen.getByRole('option', { name: 'Own car (driver’s)' })).toBeInTheDocument()
+    await pickVehicle('Own car (driver’s)')
+    expect(screen.queryByLabelText(/Starting KM/)).toBeNull()
+  })
+
   it('reveals end details when the duty is already finished and shows live totals, including past midnight', async () => {
     setup()
     await pickVehicle('CRYSTA 6435')
@@ -54,6 +62,10 @@ describe('Start duty form', () => {
     await userEvent.type(start, '22:00')
     await userEvent.clear(end)
     await userEvent.type(end, '07:15')
+    // same-day end with an earlier time is not allowed; the driver sets the trip end date to the next day
+    fireEvent.change(screen.getByLabelText(/Trip end date/), {
+      target: { value: addDays(istParts().date, 1) },
+    })
     expect(await screen.findByText('52 km · 9h 15m · Ends next day')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Submit duty' })).toBeInTheDocument()
   })

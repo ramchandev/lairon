@@ -13,6 +13,7 @@ export type Field =
   | 'totalKm'
   | 'startTime'
   | 'endTime'
+  | 'endDate'
   | 'totalHours'
   | 'fuelLitres'
   | 'fuelAmount'
@@ -34,6 +35,7 @@ const ALIASES: Record<Field, string[]> = {
   totalKm: ['totalkm', 'km', 'kms'],
   startTime: ['startingtime', 'starttime', 'openingtime'],
   endTime: ['closingtime', 'endtime', 'endingtime'],
+  endDate: ['tripenddate', 'enddate', 'closingdate', 'endingdate', 'dateend'],
   totalHours: ['totalhours', 'hours', 'duration'],
   fuelLitres: ['fuelinliters', 'fuelinlitres', 'fuelliters', 'fuellitres'],
   fuelAmount: ['fuelamount', 'fuelcost'],
@@ -54,7 +56,7 @@ export interface Issue {
   message: string
 }
 export type EntryKind = 'duty' | 'week_off' | 'leave'
-export type VehicleKind = 'fleet' | 'own' | 'other'
+export type VehicleKind = 'fleet' | 'own' | 'driver_own' | 'other'
 
 export interface ParsedRow {
   line: number
@@ -73,6 +75,8 @@ export interface ParsedRow {
   totalKm: number | null
   startTime: string | null
   endTime: string | null
+  /** Trip end date (yyyy-mm-dd) when the sheet states one that is not before the start date. */
+  endDate: string | null
   totalMinutes: number | null
   fuelLitres: number | null
   fuelAmount: number | null
@@ -80,6 +84,8 @@ export interface ParsedRow {
 }
 
 // ───────────── cell readers ─────────────
+/** "Own car" / "Driver's own car" = the driver's personal car ("Own" alone is the guest's vehicle). */
+const DRIVER_OWN = /^(own car|driver'?s? own|drivers own)/i
 const BLANK = new Set(['', '-', '–', '—', 'na', 'n/a'])
 export function cell(v: unknown): string | number | null {
   if (v === null || v === undefined) return null
@@ -290,7 +296,8 @@ export function parseSheet(aoa: unknown[][], vehicles: Vehicle[] = []): ParsedSh
     let vehicleKind: VehicleKind | null = null
     if (entryType === 'duty' && vehicleCell !== null) {
       vehicle = String(vehicleCell)
-      if (/^own\b/i.test(vehicle)) vehicleKind = 'own'
+      if (DRIVER_OWN.test(vehicle)) vehicleKind = 'driver_own'
+      else if (/^own\b/i.test(vehicle)) vehicleKind = 'own'
       else if (fleet.has(norm(vehicle))) vehicleKind = 'fleet'
       else {
         vehicleKind = 'other'
@@ -300,6 +307,16 @@ export function parseSheet(aoa: unknown[][], vehicles: Vehicle[] = []): ParsedSh
           message: `Vehicle “${vehicle}” isn’t in the fleet — saved as “Others · ${vehicle}”`,
         })
       }
+    }
+
+    let endDate = parseDate(get(r, 'endDate'))
+    if (endDate && date && endDate < date) {
+      issues.push({
+        severity: 'warning',
+        line,
+        message: `Trip end date (${endDate}) is before the start date — end date ignored`,
+      })
+      endDate = null
     }
 
     let startKm = parseNumber(get(r, 'startKm'))
@@ -341,6 +358,7 @@ export function parseSheet(aoa: unknown[][], vehicles: Vehicle[] = []): ParsedSh
       totalKm,
       startTime: parseTime(get(r, 'startTime')),
       endTime: parseTime(get(r, 'endTime')),
+      endDate: entryType === 'duty' ? endDate : null,
       totalMinutes: parseMinutes(get(r, 'totalHours')),
       fuelLitres: parseNumber(get(r, 'fuelLitres')),
       fuelAmount: parseNumber(get(r, 'fuelAmount')),

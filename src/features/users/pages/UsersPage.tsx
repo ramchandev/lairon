@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Navigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/app/AuthProvider'
-import { Inbox, KeyRound, LogOut, Mail, Pencil, UserCheck, UserX } from 'lucide-react'
+import { Inbox, KeyRound, LogOut, Mail, Pencil, Upload, UserCheck, UserX } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { DataTable, type Column } from '@/components/DataTable'
 import { AddButton, Fab, IconButton, IconLink, Person, Tag } from '@/components/ListParts'
@@ -136,7 +136,16 @@ export function UsersPage({ role }: { role: ManagedRole }) {
       <PageHeader
         title={meta.plural}
         subtitle={SUBTITLE[role]}
-        action={<AddButton to={addTo} label={addLabel} />}
+        action={
+          <div className="flex gap-2">
+            {role !== 'admin' && (
+              <Link to={`/admin/users/import?role=${role}`} className="btn btn-ghost">
+                <Upload aria-hidden /> <span className="hidden sm:inline">Import</span>
+              </Link>
+            )}
+            <AddButton to={addTo} label={addLabel} />
+          </div>
+        }
       />
       <div className="toolbar">
         <SearchInput

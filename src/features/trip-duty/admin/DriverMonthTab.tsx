@@ -118,6 +118,12 @@ export function DriverMonthTab({
         e.entry_type === 'duty' ? (
           <span className="tabular">
             {time12(e.end_time)}
+            {e.end_date && e.end_date !== e.entry_date && (
+              <>
+                <br />
+                {fmtDate(e.end_date)}
+              </>
+            )}
             {e.end_km !== null && (
               <>
                 <br />

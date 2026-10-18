@@ -61,7 +61,7 @@ const COLS: [string, number, (e: DayEntry) => string][] = [
     1.1,
     (e) =>
       e.entry_type === 'duty'
-        ? `${time12(e.end_time)}${e.end_km !== null ? `\n${e.end_km} km` : ''}`
+        ? `${time12(e.end_time)}${e.end_date && e.end_date !== e.entry_date ? ` (${e.end_date.slice(8)}/${e.end_date.slice(5, 7)})` : ''}${e.end_km !== null ? `\n${e.end_km} km` : ''}`
         : '',
   ],
   ['KM', 0.7, (e) => (e.total_km !== null ? String(e.total_km) : '')],

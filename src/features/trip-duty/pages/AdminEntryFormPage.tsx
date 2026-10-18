@@ -10,12 +10,19 @@ import { useLookup } from '@/features/lookups/hooks'
 import { useUsers } from '@/features/users/api'
 import { useVehicles } from '@/features/vehicles/api'
 import { vehicleLabel } from '@/lib/format'
+import { addDays } from '@/lib/time'
 import { useEntry } from '../api'
 import { useAdminSaveDuty } from '../admin-api'
 import { tripSummary, tripText, vehicleChoice, type DayEntry } from '../logic'
 import { adminDutySchema, isFleet, type DutyForm } from '../schemas'
 
 const hhmm = (t: string | null) => (t ? t.slice(0, 5) : '')
+/** Saved end date, or (older rows) the next day when the closing time is earlier than the start. */
+const endDateOf = (e: DayEntry) =>
+  e.end_date ??
+  (e.end_time && e.start_time && e.end_time < e.start_time
+    ? addDays(e.entry_date, 1)
+    : e.entry_date)
 const numStr = (n: number | null) => (n === null || n === undefined ? '' : String(n))
 
 /** Admin add/edit of any driver's duty. Looser than the driver form: imported rows may have no times or KM. */
@@ -78,6 +85,7 @@ function Inner({
     finished: entry ? entry.duty_status === 'closed' : true,
     end_km: numStr(entry?.end_km ?? null),
     end_time: hhmm(entry?.end_time ?? null),
+    end_date: entry ? endDateOf(entry) : date,
     fuel_litres: numStr(entry?.fuel_litres ?? null),
     fuel_amount: numStr(entry?.fuel_amount ?? null),
   }
@@ -88,10 +96,21 @@ function Inner({
     handleSubmit,
     formState: { errors, isDirty },
   } = useForm<DutyForm>({ resolver: zodResolver(adminDutySchema), defaultValues: defaults })
-  const [vehicle, finished, startKm, endKm, startTime, endTime, dutyType] = useWatch({
-    control,
-    name: ['vehicle', 'finished', 'start_km', 'end_km', 'start_time', 'end_time', 'duty_type'],
-  })
+  const [vehicle, finished, startKm, endKm, startTime, endTime, dutyType, entryDate, endDate] =
+    useWatch({
+      control,
+      name: [
+        'vehicle',
+        'finished',
+        'start_km',
+        'end_km',
+        'start_time',
+        'end_time',
+        'duty_type',
+        'entry_date',
+        'end_date',
+      ],
+    })
   const fleet = isFleet(vehicle)
   const live = tripText(
     tripSummary({
@@ -99,6 +118,8 @@ function Inner({
       endKm: finished ? endKm : '',
       startTime,
       endTime: finished ? endTime : '',
+      startDate: entryDate,
+      endDate: finished ? endDate : '',
     }),
   )
   const typeOptions = dutyTypes.data?.length
@@ -149,6 +170,7 @@ function Inner({
                   {vehicleLabel(v.name, v.vehicle_number)}
                 </option>
               ))}
+            <option value="driver_own">Own car (driver’s)</option>
             <option value="own">Own (guest’s vehicle)</option>
             <option value="other">Others</option>
           </select>
@@ -214,6 +236,9 @@ function Inner({
                   />
                 </Field>
               )}
+              <Field label="Trip end date" error={errors.end_date?.message}>
+                <input type="date" className={inputCls} min={entryDate} {...register('end_date')} />
+              </Field>
               <Field label="Closing time" error={errors.end_time?.message}>
                 <input type="time" className={inputCls} {...register('end_time')} />
               </Field>

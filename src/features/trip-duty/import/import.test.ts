@@ -281,15 +281,30 @@ describe('row rules and checks', () => {
       endKm: 1543,
       totalKm: 93,
       startTime: '09:00',
+      endDate: '2026-10-01',
       totalMinutes: 570,
       fuelLitres: 10,
     })
     expect(p.rows[1]).toMatchObject({
       dutyType: 'Out Station',
-      vehicleKind: 'own',
-      totalMinutes: 975,
+      vehicleKind: 'driver_own', // "Own car" = the driver's own car
+      endDate: '2026-10-03',
+      totalMinutes: 1515,
     })
     expect(p.rows[2].entryType).toBe('week_off')
+  })
+  it('reads Trip End Date, ignores one before the start, and tells "Own car" from "Own"', () => {
+    const p = parseSheet(
+      [
+        ['Date', 'Trip End Date', 'Vehicle', 'Guest'],
+        ['01/10/2026', '02/10/2026', 'Own car', 'A'],
+        ['03/10/2026', '02/10/2026', 'Own', 'B'],
+      ],
+      vehicles,
+    )
+    expect(p.rows[0]).toMatchObject({ endDate: '2026-10-02', vehicleKind: 'driver_own' })
+    expect(p.rows[1]).toMatchObject({ endDate: null, vehicleKind: 'own' })
+    expect(p.rows[1].issues.map((i) => i.message).join(' ')).toMatch(/before the start date/)
   })
   it('lists unknown columns and fails clearly without a Date column', () => {
     expect(

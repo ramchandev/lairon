@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { Download, Eye, Inbox } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { Download, Eye, Inbox, Upload } from 'lucide-react'
 import { DataTable, type Column } from '@/components/DataTable'
 import { IconLink } from '@/components/ListParts'
 import { EmptyState } from '@/components/EmptyState'
@@ -87,15 +87,20 @@ export function AdminRequestsPage() {
         title="Service Requests"
         subtitle="Raised by doctor’s managers"
         action={
-          <button
-            className="btn btn-ghost"
-            disabled={rows.length === 0}
-            onClick={() =>
-              exportBatchesCsv(rows, `service-requests-${new Date().toISOString().slice(0, 10)}`)
-            }
-          >
-            <Download aria-hidden /> <span className="hidden sm:inline">Export CSV</span>
-          </button>
+          <div className="flex gap-2">
+            <Link to="/admin/service-requests/import" className="btn btn-ghost">
+              <Upload aria-hidden /> <span className="hidden sm:inline">Import</span>
+            </Link>
+            <button
+              className="btn btn-ghost"
+              disabled={rows.length === 0}
+              onClick={() =>
+                exportBatchesCsv(rows, `service-requests-${new Date().toISOString().slice(0, 10)}`)
+              }
+            >
+              <Download aria-hidden /> <span className="hidden sm:inline">Export CSV</span>
+            </button>
+          </div>
         }
       />
       <div className="mb-3.5 space-y-3">

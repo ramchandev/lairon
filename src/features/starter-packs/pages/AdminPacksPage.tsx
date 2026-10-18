@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { Download, Eye, FileDown, Inbox } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { Download, Eye, FileDown, Inbox, Upload } from 'lucide-react'
 import { DataTable, type Column } from '@/components/DataTable'
 import { AddButton, IconLink, Tag } from '@/components/ListParts'
 import { EmptyState } from '@/components/EmptyState'
@@ -117,6 +117,9 @@ export function AdminPacksPage() {
             >
               <Download aria-hidden /> <span className="hidden sm:inline">CSV</span>
             </button>
+            <Link to="/admin/starter-packs/import" className="btn btn-ghost">
+              <Upload aria-hidden /> <span className="hidden sm:inline">Import</span>
+            </Link>
             <AddButton to="/admin/starter-packs/new" label="New request" />
           </div>
         }

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { ArrowRight, CarFront, Clock, Fuel, Gauge, UserRound } from 'lucide-react'
-import { inr } from '@/lib/format'
+import { fmtDate, inr } from '@/lib/format'
 import { minutesText, time12 } from '@/lib/time'
 import { cn } from '@/lib/utils'
 import type { DayEntry } from '../logic'
@@ -57,7 +57,13 @@ export function DutyCard({
         <span className="mono">
           <Clock aria-hidden />
           {time12(e.start_time)}
-          {e.end_time && <> – {time12(e.end_time)}</>}
+          {e.end_time && (
+            <>
+              {' '}
+              – {time12(e.end_time)}
+              {e.end_date && e.end_date !== e.entry_date && <> · {fmtDate(e.end_date)}</>}
+            </>
+          )}
           {e.total_minutes ? ` · ${minutesText(e.total_minutes)}` : ''}
         </span>
         {(e.fuel_litres || e.fuel_amount) && (

@@ -30,16 +30,26 @@ function Inner({ id, e }: { id: string; e: DayEntry }) {
     handleSubmit,
     formState: { errors, isDirty },
   } = useForm<CloseForm>({
-    resolver: zodResolver(closeSchema(fleet, e.start_km)),
-    defaultValues: { end_km: '', end_time: istParts().time, fuel_litres: '', fuel_amount: '' },
+    resolver: zodResolver(
+      closeSchema(fleet, e.start_km, { date: e.entry_date, time: e.start_time ?? '' }),
+    ),
+    defaultValues: {
+      end_km: '',
+      end_time: istParts().time,
+      end_date: istParts().date,
+      fuel_litres: '',
+      fuel_amount: '',
+    },
   })
-  const [endKm, endTime] = useWatch({ control, name: ['end_km', 'end_time'] })
+  const [endKm, endTime, endDate] = useWatch({ control, name: ['end_km', 'end_time', 'end_date'] })
   const live = tripText(
     tripSummary({
       startKm: String(e.start_km ?? ''),
       endKm,
       startTime: e.start_time ?? '',
       endTime,
+      startDate: e.entry_date,
+      endDate,
     }),
   )
   const onSubmit = handleSubmit((v) =>
@@ -99,6 +109,14 @@ function Inner({ id, e }: { id: string; e: DayEntry }) {
               />
             </Field>
           )}
+          <Field
+            label="Trip end date"
+            required
+            error={errors.end_date?.message}
+            hint="The day the trip ended. Beta is counted on the start date."
+          >
+            <input type="date" className={inputCls} min={e.entry_date} {...register('end_date')} />
+          </Field>
           <Field label="Closing time" required error={errors.end_time?.message}>
             <input type="time" className={inputCls} {...register('end_time')} />
           </Field>

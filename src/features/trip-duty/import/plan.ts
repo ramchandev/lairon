@@ -202,6 +202,7 @@ export function toPayload(
       end_km: r.endKm,
       start_time: r.startTime,
       end_time: r.endTime,
+      end_date: r.endDate,
       total_km: r.totalKm,
       total_minutes: r.totalMinutes,
       fuel_litres: r.fuelLitres,

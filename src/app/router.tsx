@@ -66,6 +66,14 @@ export const router = createBrowserRouter([
                 ),
               },
               {
+                path: 'service-requests/import',
+                ...sub('Import Service Requests', '/admin/service-requests'),
+                ...page(
+                  () => import('@/features/service-requests/import/RequestsImportPage'),
+                  'RequestsImportPage',
+                ),
+              },
+              {
                 path: 'service-requests/:id',
                 ...sub('Service Request', '/admin/service-requests'),
                 ...page(
@@ -79,6 +87,14 @@ export const router = createBrowserRouter([
                 ...page(
                   () => import('@/features/starter-packs/pages/AdminPacksPage'),
                   'AdminPacksPage',
+                ),
+              },
+              {
+                path: 'starter-packs/import',
+                ...sub('Import Starter Packs', '/admin/starter-packs'),
+                ...page(
+                  () => import('@/features/starter-packs/import/PacksImportPage'),
+                  'PacksImportPage',
                 ),
               },
               {
@@ -159,6 +175,11 @@ export const router = createBrowserRouter([
                 path: 'users',
                 ...h('Users'),
                 ...page(() => import('@/features/users/pages/UsersPage'), 'UsersRedirect'),
+              },
+              {
+                path: 'users/import',
+                ...sub('Import Users', '/admin/staff'),
+                ...page(() => import('@/features/users/import/UsersImportPage'), 'UsersImportPage'),
               },
               {
                 path: 'users/new',

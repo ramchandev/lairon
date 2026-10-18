@@ -27,6 +27,7 @@ const e = (o: Partial<DayEntry>): DayEntry => ({
   start_time: null,
   end_km: null,
   end_time: null,
+  end_date: null,
   total_km: null,
   total_minutes: null,
   fuel_litres: null,
@@ -59,6 +60,36 @@ describe('tripSummary', () => {
       nextDay: false,
     })
     expect(tripText({ km: null, minutes: null, nextDay: false })).toBe('')
+  })
+})
+
+describe('trip end date', () => {
+  it('uses whole days between the dates plus the time difference', () => {
+    const t = tripSummary({
+      startTime: '22:00',
+      endTime: '07:00',
+      startDate: '2026-10-18',
+      endDate: '2026-10-19',
+    })
+    expect(t).toEqual({ km: null, minutes: 540, nextDay: true, daysLater: 1 })
+    const multi = tripSummary({
+      startTime: '09:00',
+      endTime: '18:00',
+      startDate: '2026-10-18',
+      endDate: '2026-10-20',
+    })
+    expect(multi.minutes).toBe(2 * 1440 + 540)
+    expect(tripText(multi)).toBe('57h · Ends 2 days later')
+  })
+  it('refuses an end before the start', () => {
+    expect(
+      tripSummary({
+        startTime: '09:00',
+        endTime: '07:00',
+        startDate: '2026-10-18',
+        endDate: '2026-10-18',
+      }).minutes,
+    ).toBeNull()
   })
 })
 

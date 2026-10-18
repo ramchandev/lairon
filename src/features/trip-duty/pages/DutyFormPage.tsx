@@ -16,6 +16,12 @@ import { tripSummary, tripText, vehicleChoice, type DayEntry } from '../logic'
 import { dutySchema, isFleet, type DutyForm } from '../schemas'
 
 const hhmm = (t: string | null) => (t ? t.slice(0, 5) : '')
+/** Saved end date, or (older rows) the next day when the closing time is earlier than the start. */
+const endDateOf = (e: DayEntry) =>
+  e.end_date ??
+  (e.end_time && e.start_time && e.end_time < e.start_time
+    ? addDays(e.entry_date, 1)
+    : e.entry_date)
 const numStr = (n: number | null) => (n === null || n === undefined ? '' : String(n))
 
 export function DutyFormPage() {
@@ -53,6 +59,7 @@ function Inner({ id, entry, windowDays }: { id?: string; entry?: DayEntry; windo
     finished: entry?.duty_status === 'closed',
     end_km: numStr(entry?.end_km ?? null),
     end_time: hhmm(entry?.end_time ?? null),
+    end_date: entry ? endDateOf(entry) : now.date,
     fuel_litres: numStr(entry?.fuel_litres ?? null),
     fuel_amount: numStr(entry?.fuel_amount ?? null),
   }
@@ -63,10 +70,21 @@ function Inner({ id, entry, windowDays }: { id?: string; entry?: DayEntry; windo
     handleSubmit,
     formState: { errors, isDirty },
   } = useForm<DutyForm>({ resolver: zodResolver(dutySchema), defaultValues: defaults })
-  const [vehicle, finished, startKm, endKm, startTime, endTime, dutyType] = useWatch({
-    control,
-    name: ['vehicle', 'finished', 'start_km', 'end_km', 'start_time', 'end_time', 'duty_type'],
-  })
+  const [vehicle, finished, startKm, endKm, startTime, endTime, dutyType, entryDate, endDate] =
+    useWatch({
+      control,
+      name: [
+        'vehicle',
+        'finished',
+        'start_km',
+        'end_km',
+        'start_time',
+        'end_time',
+        'duty_type',
+        'entry_date',
+        'end_date',
+      ],
+    })
   const fleet = isFleet(vehicle)
   const lastKm = useLastKm(fleet ? vehicle.slice(6) : undefined)
   const wasClosed = entry?.duty_status === 'closed'
@@ -77,6 +95,8 @@ function Inner({ id, entry, windowDays }: { id?: string; entry?: DayEntry; windo
       endKm: finished ? endKm : '',
       startTime,
       endTime: finished ? endTime : '',
+      startDate: entryDate,
+      endDate: finished ? endDate : '',
     }),
   )
   const lowKm =
@@ -146,6 +166,7 @@ function Inner({ id, entry, windowDays }: { id?: string; entry?: DayEntry; windo
                   {vehicleLabel(v.name, v.vehicle_number)}
                 </option>
               ))}
+            <option value="driver_own">Own car (driver’s)</option>
             <option value="own">Own (guest’s vehicle)</option>
             <option value="other">Others</option>
           </select>
@@ -237,6 +258,14 @@ function Inner({ id, entry, windowDays }: { id?: string; entry?: DayEntry; windo
                   />
                 </Field>
               )}
+              <Field
+                label="Trip end date"
+                required
+                error={errors.end_date?.message}
+                hint="The day the trip ended. Beta is counted on the start date."
+              >
+                <input type="date" className={inputCls} min={entryDate} {...register('end_date')} />
+              </Field>
               <Field label="Closing time" required error={errors.end_time?.message}>
                 <input type="time" className={inputCls} {...register('end_time')} />
               </Field>

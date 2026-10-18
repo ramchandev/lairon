@@ -144,6 +144,7 @@ export function useCloseDuty(id: string) {
         .update({
           end_km: v.fleet && v.end_km ? Number(v.end_km) : null,
           end_time: v.end_time,
+          end_date: v.end_date,
           fuel_litres: v.fuel_litres ? Number(v.fuel_litres) : null,
           fuel_amount: v.fuel_amount ? Number(v.fuel_amount) : null,
           duty_status: 'closed',

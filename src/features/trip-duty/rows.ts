@@ -27,6 +27,7 @@ export function dutyToRow(
     start_time: v.start_time,
     end_km: v.finished && fleet ? int(v.end_km) : null,
     end_time: v.finished ? v.end_time : null,
+    end_date: v.finished ? v.end_date || v.entry_date : null,
     fuel_litres: v.finished ? int(v.fuel_litres) : null,
     fuel_amount: v.finished ? int(v.fuel_amount) : null,
     total_km: null,

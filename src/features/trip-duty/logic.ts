@@ -1,5 +1,4 @@
-import { addDays } from '@/lib/time'
-import { minutesText, timeToMinutes } from '@/lib/time'
+import { addDays, diffDays, minutesText, timeToMinutes } from '@/lib/time'
 import { vehicleLabel } from '@/lib/format'
 
 export type EntryType = 'duty' | 'week_off' | 'leave'
@@ -11,7 +10,7 @@ export interface DayEntry {
   entry_date: string
   entry_type: EntryType
   duty_type: string | null
-  vehicle_source: 'fleet' | 'own' | 'other' | null
+  vehicle_source: 'fleet' | 'own' | 'driver_own' | 'other' | null
   vehicle_id: string | null
   vehicle_label: string | null
   guest_name: string | null
@@ -22,6 +21,8 @@ export interface DayEntry {
   start_time: string | null
   end_km: number | null
   end_time: string | null
+  /** The day the trip ended (null = same day, or past midnight for older entries). */
+  end_date: string | null
   total_km: number | null
   total_minutes: number | null
   fuel_litres: number | null
@@ -41,6 +42,8 @@ export interface Trip {
   km: number | null
   minutes: number | null
   nextDay: boolean
+  /** Whole days between the start date and the trip end date (only when both dates were given). */
+  daysLater?: number
 }
 
 /** Same arithmetic as the database trigger: km = end − start; minutes wrap past midnight. */
@@ -49,6 +52,8 @@ export function tripSummary(i: {
   endKm?: string
   startTime?: string
   endTime?: string
+  startDate?: string
+  endDate?: string
 }): Trip {
   const s = i.startKm?.trim() ? Number(i.startKm) : NaN
   const e = i.endKm?.trim() ? Number(i.endKm) : NaN
@@ -56,6 +61,14 @@ export function tripSummary(i: {
   const a = timeToMinutes(i.startTime ?? '')
   const b = timeToMinutes(i.endTime ?? '')
   if (Number.isNaN(a) || Number.isNaN(b)) return { km, minutes: null, nextDay: false }
+  if (i.startDate && i.endDate) {
+    // Explicit trip end date: whole days between + the time difference (the database does the same).
+    const days = diffDays(i.startDate, i.endDate)
+    const minutes = days * 1440 + b - a
+    return minutes < 0
+      ? { km, minutes: null, nextDay: false, daysLater: days }
+      : { km, minutes, nextDay: days > 0, daysLater: days }
+  }
   const nextDay = b < a
   return { km, minutes: nextDay ? b + 1440 - a : b - a, nextDay }
 }
@@ -65,7 +78,11 @@ export const tripText = (t: Trip) =>
   [
     t.km !== null ? `${t.km} km` : '',
     t.minutes !== null ? minutesText(t.minutes) : '',
-    t.nextDay ? 'Ends next day' : '',
+    t.nextDay
+      ? t.daysLater && t.daysLater > 1
+        ? `Ends ${t.daysLater} days later`
+        : 'Ends next day'
+      : '',
   ]
     .filter(Boolean)
     .join(' · ')
@@ -194,14 +211,17 @@ export function dateRange(from: string, to: string): string[] {
 
 // ───────────── vehicle choice ─────────────
 export const OWN_LABEL = 'Own (guest vehicle)'
+export const DRIVER_OWN_LABEL = 'Own car (driver)'
 export const vehicleChoice = (e: Pick<DayEntry, 'vehicle_source' | 'vehicle_id'>) =>
   e.vehicle_source === 'fleet' && e.vehicle_id
     ? `fleet:${e.vehicle_id}`
     : e.vehicle_source === 'own'
       ? 'own'
-      : e.vehicle_source === 'other'
-        ? 'other'
-        : ''
+      : e.vehicle_source === 'driver_own'
+        ? 'driver_own'
+        : e.vehicle_source === 'other'
+          ? 'other'
+          : ''
 
 /** Resolve the dropdown choice into the saved snapshot columns (plain text label, nullable id). */
 export function resolveVehicle(
@@ -211,6 +231,12 @@ export function resolveVehicle(
 ) {
   if (choice === 'own')
     return { vehicle_source: 'own' as const, vehicle_id: null, vehicle_label: OWN_LABEL }
+  if (choice === 'driver_own')
+    return {
+      vehicle_source: 'driver_own' as const,
+      vehicle_id: null,
+      vehicle_label: DRIVER_OWN_LABEL,
+    }
   if (choice === 'other')
     return {
       vehicle_source: 'other' as const,

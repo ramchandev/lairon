@@ -22,6 +22,7 @@ const duty = (n: number): DayEntry => ({
   start_time: '09:00',
   end_km: 193,
   end_time: '18:30',
+  end_date: null,
   total_km: 93,
   total_minutes: 570,
   fuel_litres: 10,
