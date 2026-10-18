@@ -1,0 +1,6 @@
+# Private areas sit behind login; the sign-in page itself is public.
+User-agent: *
+Disallow: /admin
+Disallow: /staff
+Disallow: /driver
+Disallow: /m/

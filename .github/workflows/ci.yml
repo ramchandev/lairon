@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Typecheck, lint, tests, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+        env:
+          # Build-time placeholders: the app only needs them to start; no secrets belong here.
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY: ci-placeholder
+      - name: Preflight (no secrets in the bundle, hosting files in sync)
+        run: npm run preflight
+        env:
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY: ci-placeholder
+          PREFLIGHT_CI: '1'
+
+  functions:
+    name: Edge Functions (Deno)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Tests (templates, recipients, delivery, retry)
+        working-directory: supabase/functions
+        run: deno test --allow-env --allow-read --allow-net _shared
+      - name: Type-check every function
+        working-directory: supabase/functions
+        run: deno check admin-create-user/index.ts admin-user-action/index.ts manager-phone-login/index.ts notify/index.ts send-email/index.ts
+
+  database:
+    name: SQL migrations + tests (scratch Postgres)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: pw
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+      - name: Run migrations, seed and all suites
+        run: bash scripts/test-sql.sh
+        env:
+          DATABASE_URL: postgres://postgres:pw@localhost:5432/postgres

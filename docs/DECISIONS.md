@@ -1,0 +1,68 @@
+# Decisions
+
+- **Tailwind v4** (CSS-first `@theme` tokens in `src/index.css`) instead of v3; shadcn `components.json` is configured so `npx shadcn@latest add <component>` works.
+- Plan said Vite + React 18: kept React 18 / React Router v6 as specified.
+- Folder `src/features/*` created empty; each feature gets `api.ts, hooks.ts, schemas.ts, components/, pages/` when its phase starts.
+- PWA icons in `public/` are generated placeholders — replace with final artwork before go-live.
+- `.env` is gitignored; `.env.example` is committed. Edge Function secrets live in `supabase/.env.functions` (never the frontend).
+- Added RPCs `create_starter_pack` and `submit_service_batch` so header + items save in one transaction and the "at least one item/service" rule lives in Postgres (PostgREST can't do multi-table transactions).
+- `beta_summary` counts a day with no matching `beta_rates` row as payable at ₹0 (rather than dropping it).
+- Service-request ref numbers are assigned on first submit (drafts don't burn numbers); starter packs get theirs on insert.
+- Managers get a read-only staff directory via RLS (`profiles_staff_directory`); drivers do not.
+- Manager `otp` mode: the function only checks the number is a registered active manager; the client then uses Supabase Phone Auth (`signInWithOtp`/`verifyOtp`), so the SMS hook stays Supabase-native.
+- Invite emails are sent by `_shared/email.ts` (minimal Resend call). Phase 8 replaces it with React Email templates + `email_log`. If sending fails, the admin gets the invite link back to share manually.
+- Resend-invite uses a *recovery* link (the account already exists), landing on the same `/set-password` page.
+- Email isn't editable on the profile page (it's the login identity); phone/role/status are read-only for everyone but Admin.
+- `manager-phone-login` now looks up the auth user's own email (`getUserById`) instead of deriving it from the phone, so an admin editing a manager's phone never breaks their login.
+- Staff/driver email is read-only after creation (it is the login identity); a manager's optional contact email is editable.
+- Dropdown reorder offers drag-and-drop (desktop) plus up/down buttons (touch + keyboard).
+- Product CSV import is additive for existing names: description updated, divisions added, nothing removed.
+- Admin user form has no photo upload/crop yet; users upload their own on Profile.
+- Doctor delete is a hard delete behind a confirm modal (requests keep the name as text); the form also offers an Active switch as the gentler option.
+- Reassigning a doctor is a small action modal on the admin list plus a manager select on the edit page; managers cannot reassign (RLS `with check manager_id = auth.uid()`).
+- `ProfessionalFields` takes `value`/`onChange` instead of react-hook-form internals so Doctors and Service Requests share it without generic form typing.
+- A rejected service request is final (the manager submits a new one); only submitted→approved/rejected and approved→fulfilled are allowed, enforced by a Postgres trigger for everyone.
+- The service-request PDF prints amounts as "Rs." because the built-in PDF fonts lack the ₹ glyph; the app UI and CSV use ₹ / plain numbers. Embedding a font with ₹ is a possible polish item.
+- Doctor picker: selecting a doctor autofills the form; typing a new name under "Others" creates an ad-hoc doctor (optionally saved to My Doctors) — the request always stores the doctor's name as text.
+- Admin list CSV exports the filtered batches as one row per service, with batch details repeated.
+- Staff cancel their own starter pack instead of editing it (the plan's "CRUD own while submitted" is delivered as create + cancel + delete-by-cancel); items are never edited after submit.
+- Admin may move a starter pack straight from Submitted to Fulfilled (skipping Processing) — useful for hand-over at the desk.
+- Admin "New starter pack" reuses the staff form with a staff picker, so on-behalf requests carry the staff member's name/area snapshot.
+- Product pickers show only the division's products, but always allow free text (as in the old form); product_id is stored when the typed name matches a product, otherwise null.
+- Driver times are entered and shown as India local time; "now" defaults come from `istParts()` (Asia/Kolkata) rather than the phone's timezone.
+- A driver can have only one open duty at a time (the Start button is disabled until it's closed), but can back-enter several finished duties on one date.
+- Cancelling a leave request deletes its pending rows; approved/rejected leave can't be changed by the driver.
+- Drivers can't read `app_settings`, so the edit window comes from the `driver_edit_window_days()` RPC; the server (RLS) is the real enforcement, the UI limits are conveniences.
+- Last-closing-KM check is across ALL drivers via `last_vehicle_km()`, because a vehicle's odometer doesn't care who drove it last.
+- Finalise month is only offered with "All drivers" selected (it finalises everyone); day-wise view is read-only.
+- The admin duty form drops the driver form's "required" rules for times and fleet KM so imported rows can still be edited; the database still enforces them for rows created in the app.
+- Leave decisions go through one RPC (`decide_leave`) per request, so a multi-day request is approved/rejected atomically and a rejection always carries a reason.
+- Beta PDF/CSV export exactly what `beta_summary()` returned for the selected month; for a finalised month that is the saved statement, not a recalculation.
+- SheetJS is installed from `cdn.sheetjs.com` (0.20.3, patched) rather than npm's stale 0.18.5; if the team prefers a registry-only install, swap to a maintained alternative (e.g. exceljs) behind `readFile.ts`.
+- The review screen's beta preview mirrors the `beta_summary()` rules in TypeScript purely to show the effect before importing; stored/finalised amounts always come from Postgres. A unit test and the phase7c SQL test both pin it to ₹6,500 for the September fixture.
+- Fill mode is the default when the driver already has entries that month (the non-destructive choice); Replace needs an explicit confirmation.
+- Imported duties default to Local when the sheet has no Duty Type, with a note; the admin marks Outstation days afterwards (Appendix C #12).
+- Emails are sent one per recipient (not one message with many addresses) so nobody sees anyone else's address and each can be retried on its own.
+- Webhook delivery uses pg_net straight from triggers with a shared-secret header, configured through a private `edge_config` table (no keys in migrations). The `notify` function always answers 200 once authenticated and logs problems, because pg_net doesn't retry; if `notify` itself is unreachable the event is lost (a future outbox table could close that gap).
+- React Email templates use classic JSX (`React` in scope) with `react` and `react-dom` pinned to the same version, so no per-function deno.json is needed.
+- The welcome email's one-time sign-in link is not stored in `email_log` (it is effectively a credential); retrying it isn't possible by design.
+- Leave emails use statement-level triggers with transition tables so one request (many rows) fires exactly one webhook.
+- Dashboard numbers come from a single `admin_dashboard()` function so the cards can never disagree with each other, and the beta figure reuses `beta_summary()` (same as the Trip Duty screen).
+- "Pending" for starter packs = submitted + processing (still needs the admin); the list got a matching Pending tab instead of linking the card to a narrower filter.
+- Company name is stored in `app_settings` and printed in PDF headers; a lookup failure falls back to "LAIRON" so exports never break. `logo_url` is reserved but has no UI yet.
+- `robots.txt` disallows only the private route prefixes, so the public sign-in page stays crawlable (blocking everything cost the SEO score for no real benefit — those pages need a login anyway).
+- Self-hosted the Plus Jakarta Sans variable font via @fontsource (faster first paint, no third-party request).
+- One header definition (`deploy/headers.ts`) drives Vercel, Cloudflare/Netlify and the local preview, so the CSP that is tested is the CSP that ships. `upgrade-insecure-requests` is removed for local preview only (it breaks `http://localhost`); production is HTTPS-only.
+- The service worker could not be exercised in the in-app browser pane (control test with no headers failed the same way), so the CSP/service-worker check runs in real headless Chrome via puppeteer-core (no browser download; uses the installed Chrome).
+- The read-only smoke test uses only the public anon key, so it is safe to run against any environment. It treats "not deployed yet" as a warning by default and as a failure with `--strict` (use after go-live).
+- Deployment itself is not automated from this repo: it needs the owner's Supabase/Resend/hosting accounts. The repo provides the checks (preflight, smoke, verify-site, SQL/Deno CI) and a runbook instead of credentials-in-CI.
+- The approved HTML is the source of truth for navigation: nav data lives in `layouts/adminNav.ts` / `roleNav.ts` and a test parses the HTML to keep them identical. Where this app has pages the HTML never designed (Settings, Email log, Staff app) they are reachable without changing the approved nav: a Settings tile under More, and Staff uses the role-app pattern.
+- Sub-page titles live on the route (`handle: { title, sub, back }`) and the top bar renders them, exactly like the prototype's `title/sub/back`; pages that need a runtime title (e.g. "Add Staff", "Review import") call `useSubTitle()`.
+- Notification bell summarises pending counts from `admin_dashboard()` (service requests, starter packs, leave requests) instead of the prototype's fixed sample text; the sidebar badge for Starter Packs counts submitted + processing, consistent with the dashboard card.
+
+## Page content follows the approved HTML
+- Component styling is the prototype's own CSS ported into `@layer components` (class names kept: `btn`, `input`, `dt`, `kpi`…), not re-interpreted Tailwind. Tailwind utilities still override it where a page needs a one-off.
+- `DataTable` renders one `<table class="dt">`; below 768px CSS turns rows into cards (as the prototype does) — no duplicate card markup.
+- In-page h1 on sub-pages is hidden (`body.subpage`), exactly like the prototype; the title lives in the top bar. Forms keep a screen-reader-only h1.
+- Dashboard numbers and lists come from one RPC (`admin_dashboard`) so the page is a single round trip.
+

@@ -1,0 +1,26 @@
+project_id = "lairon-ez"
+
+[auth]
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173/set-password", "http://localhost:5173/login"]
+enable_signup = false            # no self sign-up: Admin creates every user (PLAN §3.1)
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+
+# Public endpoint: the manager is not signed in yet. Rate-limited inside the function.
+[functions.manager-phone-login]
+verify_jwt = false
+
+# Called by Postgres (pg_net) with a shared secret header, not a user JWT.
+[functions.notify]
+verify_jwt = false
+
+# Admin "Retry" from the Email Log screen.
+[functions.send-email]
+verify_jwt = true
+
+[functions.admin-create-user]
+verify_jwt = true
+
+[functions.admin-user-action]
+verify_jwt = true
