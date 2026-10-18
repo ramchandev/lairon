@@ -8,7 +8,8 @@
 /** Content-Security-Policy for the production build (no inline scripts, no eval; fonts are self-hosted). */
 export const CSP = [
   "default-src 'self'",
-  "script-src 'self'",
+  // 'wasm-unsafe-eval' lets WebAssembly compile (the PDF layout engine, yoga, is WASM); it does NOT allow eval() of strings.
+  "script-src 'self' 'wasm-unsafe-eval'",
   // React sets inline style attributes (progress bar, grid columns), so styles need 'unsafe-inline'. Scripts do not.
   "style-src 'self' 'unsafe-inline'",
   // Avatars come from Supabase Storage; blob:/data: for generated downloads and previews.

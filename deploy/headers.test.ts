@@ -6,8 +6,9 @@ describe('hosting headers', () => {
     const d = Object.fromEntries(
       CSP.split('; ').map((x) => [x.split(' ')[0], x.split(' ').slice(1)]),
     )
-    expect(d['script-src']).toEqual(["'self'"])
-    expect(CSP).not.toMatch(/unsafe-eval/)
+    // 'wasm-unsafe-eval' only lets WebAssembly compile (the PDF layout engine); string eval() stays blocked.
+    expect(d['script-src']).toEqual(["'self'", "'wasm-unsafe-eval'"])
+    expect(CSP).not.toMatch(/'unsafe-eval'/)
     expect(d['default-src']).toEqual(["'self'"])
     expect(d['frame-ancestors']).toEqual(["'none'"])
     expect(d['object-src']).toEqual(["'none'"])

@@ -186,3 +186,6 @@ The portal's navigation now matches `design/lairon-ez-prototype.html` (pixel-com
 ## Dialogs and pickers (fix)
 - Pickers and dialogs inside glass cards were sized/placed relative to the card (a `backdrop-filter` parent captures `position: fixed` children), so the Qualification/Division picker in the doctor form looked clipped and half-transparent. All overlays (`SearchSelect`, `ConfirmDialog`, `ReassignDialog`) now render through a `Portal` on `<body>` with a solid panel; a test guards it.
 - Profile page: spacing between the profile, contact and edit cards, and the contact list's label/value layout, fixed.
+
+## PDF export failed in production (fix)
+- Cause: the PDF engine's layout step (yoga) is WebAssembly, and the production Content-Security-Policy blocked WebAssembly (`script-src 'self'` only). It worked in development, which has no CSP. Fix: `script-src 'self' 'wasm-unsafe-eval'` (allows WASM only; string `eval()` stays blocked) in `deploy/headers.ts`, `vercel.ts` and the generated `public/_headers`. Needs a redeploy.
