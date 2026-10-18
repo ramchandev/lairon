@@ -1,4 +1,4 @@
-import { FunctionsHttpError } from '@supabase/supabase-js'
+import { FunctionsFetchError, FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { normalizePhone } from '@/lib/phone'
 
@@ -12,6 +12,8 @@ async function fnError(error: unknown): Promise<string> {
       /* fall through */
     }
   }
+  if (error instanceof FunctionsFetchError)
+    return 'Could not reach the server. If this keeps happening, the site address may not be allowed yet (APP_URL in Supabase secrets) — ask your administrator.'
   return 'Something went wrong. Please try again.'
 }
 

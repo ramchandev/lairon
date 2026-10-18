@@ -11,7 +11,12 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: false, // registered in src/lib/pwa.ts, which also polls for updates
       workbox: {
+        // A new build takes over at once (no waiting for every tab to close); the page then reloads onto it.
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         // The PDF and Excel libraries are big and rarely used: don't make every first install download them.
         // They are cached the first time someone uses PDF export / import.
         globIgnores: ['**/react-pdf*.js', '**/xlsx*.js'],

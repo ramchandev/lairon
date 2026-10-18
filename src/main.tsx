@@ -7,6 +7,7 @@ import { AuthProvider } from '@/app/AuthProvider'
 import { router } from '@/app/router'
 import '@fontsource-variable/plus-jakarta-sans/wght.css' // self-hosted: no third-party font request
 import './index.css'
+import { startAutoUpdate } from '@/lib/pwa'
 
 // DEV ONLY: `?preview=admin|driver|manager|staff` fakes a signed-in user for visual comparison (tree-shaken from production).
 const previewRole = import.meta.env.DEV
@@ -17,6 +18,8 @@ const previewRole = import.meta.env.DEV
     })()
   : null
 const dev = previewRole ? await import('./dev/preview') : null
+
+startAutoUpdate()
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { staleTime: 30_000, retry: 1, refetchOnWindowFocus: false } },
