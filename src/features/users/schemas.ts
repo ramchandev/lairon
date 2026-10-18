@@ -6,7 +6,10 @@ export type ManagedRole = 'staff' | 'driver' | 'manager' | 'admin'
 const emailOk = (v: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)
 
 /** Per-role required fields (PLAN §5.1): Staff/Driver need an email; Manager's is optional. */
-export const userSchema = (role: ManagedRole) =>
+export const MIN_PASSWORD = 8
+
+/** `editing`: an existing user (a driver's password is then optional — fill it only to change it). */
+export const userSchema = (role: ManagedRole, editing = false) =>
   z.object({
     full_name: z.string().trim().min(1, 'Name is required'),
     phone: z
@@ -23,6 +26,13 @@ export const userSchema = (role: ManagedRole) =>
     area: z.string().trim(),
     hq: z.string().trim(),
     bio: z.string().trim().max(500, 'Keep it under 500 characters'),
+    /** Drivers only: the password the admin sets (no email is sent). */
+    password: z
+      .string()
+      .refine(
+        (v) => role !== 'driver' || (editing && v === '') || v.length >= MIN_PASSWORD,
+        `Use at least ${MIN_PASSWORD} characters`,
+      ),
   })
 export type UserForm = z.infer<ReturnType<typeof userSchema>>
 

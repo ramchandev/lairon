@@ -23,8 +23,16 @@ Deno.serve(async (req) => {
   // Rate limit: max 5 attempts / 15 min per phone and per IP.
   const since = new Date(Date.now() - WINDOW_MIN * 60_000).toISOString()
   const [byPhone, byIp] = await Promise.all([
-    admin.from('login_attempts').select('id', { count: 'exact', head: true }).eq('phone', phone).gte('created_at', since),
-    admin.from('login_attempts').select('id', { count: 'exact', head: true }).eq('ip', ip).gte('created_at', since),
+    admin
+      .from('login_attempts')
+      .select('id', { count: 'exact', head: true })
+      .eq('phone', phone)
+      .gte('created_at', since),
+    admin
+      .from('login_attempts')
+      .select('id', { count: 'exact', head: true })
+      .eq('ip', ip)
+      .gte('created_at', since),
   ])
   if ((byPhone.count ?? 0) >= MAX_ATTEMPTS || (byIp.count ?? 0) >= MAX_ATTEMPTS * 3) {
     return json(req, { error: `Too many attempts. Try again in ${WINDOW_MIN} minutes.` }, 429)
@@ -32,8 +40,12 @@ Deno.serve(async (req) => {
   await admin.from('login_attempts').insert({ phone, ip })
 
   // Admin pre-registers managers. Unknown / inactive numbers get the same generic message.
-  const { data: profile } = await admin.from('profiles').select('id,is_active')
-    .eq('phone', phone).eq('role', 'manager').maybeSingle()
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('id,is_active')
+    .eq('phone', phone)
+    .eq('role', 'manager')
+    .maybeSingle()
   if (!profile || !profile.is_active) return json(req, { error: GENERIC }, 401)
 
   const mode = Deno.env.get('MANAGER_AUTH_MODE') ?? 'phone_only'
@@ -43,7 +55,10 @@ Deno.serve(async (req) => {
   const { data: authUser } = await admin.auth.admin.getUserById(profile.id)
   const authEmail = authUser.user?.email
   if (!authEmail) return json(req, { error: GENERIC }, 401)
-  const { data, error } = await admin.auth.admin.generateLink({ type: 'magiclink', email: authEmail })
+  const { data, error } = await admin.auth.admin.generateLink({
+    type: 'magiclink',
+    email: authEmail,
+  })
   if (error || !data.properties?.hashed_token) return json(req, { error: GENERIC }, 401)
   return json(req, { mode: 'phone_only', token_hash: data.properties.hashed_token })
 })

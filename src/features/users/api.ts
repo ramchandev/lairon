@@ -76,6 +76,7 @@ export function useCreateUser(role: ManagedRole) {
         area: v.area || undefined,
         hq: v.hq || undefined,
         bio: v.bio || undefined,
+        password: role === 'driver' ? v.password : undefined,
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   })
@@ -99,6 +100,7 @@ export function useUpdateUser(id: string, role: ManagedRole) {
         throw new Error(
           error.code === '23505' ? 'Another user already has this phone number.' : error.message,
         )
+      if (role === 'driver' && v.password) await adminUserAction('set_password', id, v.password)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   })

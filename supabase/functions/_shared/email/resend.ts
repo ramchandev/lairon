@@ -8,11 +8,23 @@ export const resendMailer: Mailer = {
     try {
       const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', ...(m.idempotencyKey ? { 'Idempotency-Key': m.idempotencyKey.slice(0, 250) } : {}) },
-        body: JSON.stringify({ from: Deno.env.get('EMAIL_FROM') ?? 'LAIRON EZ <noreply@lairon.in>', to: [m.to], subject: m.subject, html: m.html, text: m.text }),
+        headers: {
+          Authorization: `Bearer ${key}`,
+          'Content-Type': 'application/json',
+          ...(m.idempotencyKey ? { 'Idempotency-Key': m.idempotencyKey.slice(0, 250) } : {}),
+        },
+        body: JSON.stringify({
+          from: Deno.env.get('EMAIL_FROM') ?? 'LAIRON EZ <noreply@lairon.in>',
+          to: [m.to],
+          subject: m.subject,
+          html: m.html,
+          text: m.text,
+        }),
       })
       const body = await res.json().catch(() => ({}))
-      return res.ok ? { ok: true, id: body.id } : { ok: false, error: `Resend ${res.status}: ${body.message ?? JSON.stringify(body)}` }
+      return res.ok
+        ? { ok: true, id: body.id }
+        : { ok: false, error: `Resend ${res.status}: ${body.message ?? JSON.stringify(body)}` }
     } catch (e) {
       return { ok: false, error: `Could not reach Resend: ${e instanceof Error ? e.message : e}` }
     }

@@ -76,6 +76,25 @@ describe('users import', () => {
     expect(errs(rows[5])[0]).toMatch(/Super Admins can’t be imported/)
     expect(errs(rows[6])[0]).toMatch(/Unknown role/)
   })
+  it('drivers need a Password of 8+ characters; other roles ignore it with a warning', () => {
+    const head = ['Role', 'Full Name', 'Phone', 'Email', 'Password']
+    const rows = parseUsers(
+      sheet(USER_FIELDS, [
+        head,
+        ['Driver', 'A', '9840122345', 'a@x.in', ''],
+        ['Driver', 'B', '9840122346', 'b@x.in', 'short'],
+        ['Driver', 'C', '9840122347', 'c@x.in', 'Driver@2026'],
+        ['Staff', 'D', '9840122348', 'd@x.in', 'whatever123'],
+      ]).records,
+      ctx,
+    ).rows
+    expect(errs(rows[0])[0]).toMatch(/Password of at least 8/)
+    expect(errs(rows[1])[0]).toMatch(/Password of at least 8/)
+    expect(errs(rows[2])).toEqual([])
+    expect(rows[2].password).toBe('Driver@2026')
+    expect(errs(rows[3])).toEqual([])
+    expect(rows[3].issues[0].severity).toBe('warning')
+  })
   it('a Manager needs no email; an unknown HQ is only a warning', () => {
     const [m] = run([['Manager', 'Anitha', '9790011223', '', 'XYZ']])
     expect(errs(m)).toEqual([])

@@ -7,8 +7,18 @@ export type Template =
   | 'leave_applied'
   | 'leave_decided'
 
-export interface WelcomeData { name: string; link: string }
-export interface ServiceRow { doctor: string; hospital: string; area: string; serviceType: string; amount: number; terms: string }
+export interface WelcomeData {
+  name: string
+  link: string
+}
+export interface ServiceRow {
+  doctor: string
+  hospital: string
+  area: string
+  serviceType: string
+  amount: number
+  terms: string
+}
 export interface ServiceRequestData {
   refNo: string
   status: 'submitted' | 'approved' | 'rejected' | 'fulfilled'
@@ -21,14 +31,25 @@ export interface ServiceRequestData {
   link?: string | null
 }
 export interface StarterPackData {
-  refNo: string; date: string; doctor: string; qualification: string; doctorArea: string
-  staffName: string; staffArea: string; division: string
+  refNo: string
+  date: string
+  doctor: string
+  qualification: string
+  doctorArea: string
+  staffName: string
+  staffArea: string
+  division: string
   items: { name: string; quantity: string }[]
   note?: string | null
   link?: string | null
 }
 export interface LeaveData {
-  driverName: string; from: string; to: string; days: number; type: string; reason: string
+  driverName: string
+  from: string
+  to: string
+  days: number
+  type: string
+  reason: string
   status?: 'approved' | 'rejected'
   note?: string | null
   link?: string | null

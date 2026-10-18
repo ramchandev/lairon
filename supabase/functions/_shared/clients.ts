@@ -19,6 +19,10 @@ export async function requireAdmin(req: Request): Promise<string | null> {
   })
   const { data } = await userClient.auth.getUser()
   if (!data.user) return null
-  const { data: p } = await admin.from('profiles').select('role,is_active').eq('id', data.user.id).maybeSingle()
+  const { data: p } = await admin
+    .from('profiles')
+    .select('role,is_active')
+    .eq('id', data.user.id)
+    .maybeSingle()
   return p?.role === 'admin' && p.is_active ? data.user.id : null
 }

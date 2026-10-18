@@ -22,8 +22,18 @@ export const USER_FIELDS: FieldSpec[] = [
   { key: 'area', label: 'Area' },
   { key: 'hq', label: 'HQ', aliases: ['headquarters', 'headquarter'] },
   { key: 'bio', label: 'Bio', aliases: ['about', 'notes'] },
+  { key: 'password', label: 'Password', aliases: ['pass', 'initialpassword', 'loginpassword'] },
 ]
-export const USER_TEMPLATE_HEADER = ['Role', 'Full Name', 'Phone', 'Email', 'Area', 'HQ', 'Bio']
+export const USER_TEMPLATE_HEADER = [
+  'Role',
+  'Full Name',
+  'Phone',
+  'Email',
+  'Area',
+  'HQ',
+  'Bio',
+  'Password',
+]
 export const USER_TEMPLATE_ROWS: (string | number)[][] = [
   [
     'Staff',
@@ -33,9 +43,10 @@ export const USER_TEMPLATE_ROWS: (string | number)[][] = [
     'Velachery',
     '',
     'Field staff, OL division',
+    '',
   ],
-  ['Driver', 'Ravikumar N', '9884033456', 'ravikumar@lairon.in', '', '', ''],
-  ['Manager', 'Anitha Rao', '9790011223', '', 'Anna Nagar', 'CHN', ''],
+  ['Driver', 'Ravikumar N', '9884033456', 'ravikumar@lairon.in', '', '', '', 'Driver@2026'],
+  ['Manager', 'Anitha Rao', '9790011223', '', 'Anna Nagar', 'CHN', '', ''],
 ]
 
 export interface UserRow extends BulkRow {
@@ -46,6 +57,8 @@ export interface UserRow extends BulkRow {
   area: string
   hq: string
   bio: string
+  /** Drivers only (no invite email is sent for them). */
+  password: string
 }
 
 const ROLE_WORDS: Record<string, ManagedRole | 'admin'> = {
@@ -117,10 +130,15 @@ export function parseUsers(records: Rec[], ctx: UserCtx): { rows: UserRow[]; iss
       if (c) hq = c
       else warn(`HQ “${hq}” isn’t in the HQ dropdown — saved as typed`)
     }
+    const password = text(r.password)
+    if (role === 'driver') {
+      if (password.length < 8)
+        err('Drivers need a Password of at least 8 characters (no email is sent)')
+    } else if (password) warn('Password is only used for drivers — ignored')
     const bio = text(r.bio)
     if (bio.length > 500) err('Bio is longer than 500 characters')
 
-    return { line, issues, role, full_name, phone, email, area: text(r.area), hq, bio }
+    return { line, issues, role, full_name, phone, email, area: text(r.area), hq, bio, password }
   })
   return { rows, issues: [] }
 }

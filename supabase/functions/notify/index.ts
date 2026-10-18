@@ -24,16 +24,35 @@ Deno.serve(async (req) => {
   const body = (await req.json().catch(() => ({}))) as NotifyBody
   const event = body.event ?? 'unknown'
   try {
-    const planned = await planEvent(body, dbLoader, Deno.env.get('APP_URL') ?? 'http://localhost:5173')
+    const planned = await planEvent(
+      body,
+      dbLoader,
+      Deno.env.get('APP_URL') ?? 'http://localhost:5173',
+    )
     if (planned.length === 0) {
-      await logProblem(deps, { template: event, status: 'skipped', error: 'No recipients for this event (check Settings → notification emails, and the person’s email)', entityId: body.id ?? body.ids?.[0] })
+      await logProblem(deps, {
+        template: event,
+        status: 'skipped',
+        error:
+          'No recipients for this event (check Settings → notification emails, and the person’s email)',
+        entityId: body.id ?? body.ids?.[0],
+      })
       return json(req, { ok: true, sent: 0, note: 'no recipients' })
     }
     const results = []
     for (const p of planned) results.push(await deliver(deps, p)) // sequential: stays well inside Resend's rate limit
-    return json(req, { ok: true, sent: results.filter((r) => r.status === 'sent').length, failed: results.filter((r) => r.status === 'failed').length })
+    return json(req, {
+      ok: true,
+      sent: results.filter((r) => r.status === 'sent').length,
+      failed: results.filter((r) => r.status === 'failed').length,
+    })
   } catch (e) {
-    await logProblem(deps, { template: event, status: 'failed', error: e instanceof Error ? e.message : String(e), entityId: body.id ?? body.ids?.[0] })
+    await logProblem(deps, {
+      template: event,
+      status: 'failed',
+      error: e instanceof Error ? e.message : String(e),
+      entityId: body.id ?? body.ids?.[0],
+    })
     return json(req, { ok: false, error: 'Could not prepare the notification (logged)' }) // 200 on purpose: pg_net does not retry
   }
 })

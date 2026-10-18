@@ -69,6 +69,8 @@ export interface CreateUserInput {
   area?: string
   hq?: string
   bio?: string
+  /** Drivers are created with an admin-set password (no email is sent). */
+  password?: string
 }
 
 export async function adminCreateUser(input: CreateUserInput) {
@@ -83,11 +85,12 @@ export async function adminCreateUser(input: CreateUserInput) {
 }
 
 export async function adminUserAction(
-  action: 'deactivate' | 'reactivate' | 'force_logout' | 'resend_invite',
+  action: 'deactivate' | 'reactivate' | 'force_logout' | 'resend_invite' | 'set_password',
   userId: string,
+  password?: string,
 ) {
   const { data, error } = await supabase.functions.invoke('admin-user-action', {
-    body: { action, user_id: userId },
+    body: { action, user_id: userId, password },
   })
   if (error) throw new Error(await fnError(error))
   return data as { ok: boolean; email_sent?: boolean; invite_link?: string | null }

@@ -4,7 +4,8 @@ import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
-import { FileText, UserRound } from 'lucide-react'
+import { Copy, Eye, EyeOff, FileText, UserRound, Wand2 } from 'lucide-react'
+import { generatePassword } from '@/lib/password'
 import { Field, FormPage, Section } from '@/components/FormPage'
 import { PhotoField } from '@/components/PhotoField'
 import { useToast } from '@/components/Toast'
@@ -15,7 +16,14 @@ import { formatPhone } from '@/lib/phone'
 import { useCreateUser, useUpdateUser, useUser } from '../api'
 import { visibleEmail } from '../components'
 import { useSubTitle } from '@/layouts/chrome'
-import { ROLE_META, roleListUrl, userSchema, type ManagedRole, type UserForm } from '../schemas'
+import {
+  MIN_PASSWORD,
+  ROLE_META,
+  roleListUrl,
+  userSchema,
+  type ManagedRole,
+  type UserForm,
+} from '../schemas'
 
 export function UserFormPage() {
   const { id } = useParams()
@@ -34,6 +42,7 @@ export function UserFormPage() {
     area: u?.area ?? '',
     hq: u?.hq ?? '',
     bio: u?.bio ?? '',
+    password: '',
   }
   return <Inner id={id} role={role} defaults={defaults} avatarUrl={u?.avatar_url ?? null} />
 }
@@ -63,11 +72,14 @@ function Inner({
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors, isDirty },
-  } = useForm<UserForm>({ resolver: zodResolver(userSchema(role)), defaultValues: defaults })
+  } = useForm<UserForm>({ resolver: zodResolver(userSchema(role, !!id)), defaultValues: defaults })
   const fullName = useWatch({ control, name: 'full_name' })
+  const passwordValue = useWatch({ control, name: 'password' })
   const back = () => navigate(roleListUrl(role), { replace: true })
 
+  const [showPw, setShowPw] = useState(false)
   const [photo, setPhoto] = useState<Blob | null>(null)
   const [photoRemoved, setPhotoRemoved] = useState(false)
   const photoChanged = !!photo || photoRemoved
@@ -98,7 +110,13 @@ function Inner({
           await savePhoto(r.id)
           if (r.invite_link) setLink(r.invite_link)
           else {
-            toast(role === 'manager' ? 'Doctor’s Manager added' : 'User added — invite email sent')
+            toast(
+              role === 'manager'
+                ? 'Doctor’s Manager added'
+                : role === 'driver'
+                  ? 'Driver added — they can sign in with the password you set'
+                  : 'User added — invite email sent',
+            )
             back()
           }
         },
@@ -163,7 +181,9 @@ function Inner({
             emailLocked
               ? 'Email is the login identity and can’t be changed here.'
               : role !== 'manager'
-                ? 'Login invite will be sent to this email.'
+                ? role === 'driver'
+                  ? 'The driver signs in with this email and the password below. No email is sent.'
+                  : 'Login invite will be sent to this email.'
                 : undefined
           }
         >
@@ -176,6 +196,66 @@ function Inner({
             {...register('email')}
           />
         </Field>
+        {role === 'driver' && (
+          <Field
+            label={id ? 'New password' : 'Password'}
+            required={!id}
+            error={errors.password?.message}
+            hint={
+              id
+                ? 'Leave blank to keep the current password. Setting one signs the driver out of other devices.'
+                : `At least ${MIN_PASSWORD} characters. Tell the driver; they can’t see it again.`
+            }
+          >
+            <div className="flex gap-2">
+              <div className="input-group min-w-0 flex-1">
+                <input
+                  className={`${inputCls} !rounded-r-none mono`}
+                  type={showPw ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  {...register('password')}
+                />
+                <button
+                  type="button"
+                  className="btn btn-ghost !rounded-l-none"
+                  aria-label={showPw ? 'Hide password' : 'Show password'}
+                  onClick={() => setShowPw((s) => !s)}
+                >
+                  {showPw ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
+                </button>
+              </div>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  setValue('password', generatePassword(), {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
+                  setShowPw(true)
+                }}
+              >
+                <Wand2 aria-hidden /> <span className="hidden sm:inline">Generate</span>
+              </button>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                disabled={!passwordValue}
+                aria-label="Copy password"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(passwordValue)
+                    toast('Password copied')
+                  } catch {
+                    toast('Could not copy — select the password and copy it', 'error')
+                  }
+                }}
+              >
+                <Copy aria-hidden /> <span className="hidden sm:inline">Copy</span>
+              </button>
+            </div>
+          </Field>
+        )}
         {meta.hasArea && (
           <Field label="Area">
             <input className={inputCls} placeholder="e.g. Velachery" {...register('area')} />
