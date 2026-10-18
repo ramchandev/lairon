@@ -182,3 +182,7 @@ The portal's navigation now matches `design/lairon-ez-prototype.html` (pixel-com
 ## Fresh code after a deployment
 - The app is a PWA, so the browser keeps the old build in a service-worker cache. Now: the new service worker takes over immediately (`skipWaiting` + `clientsClaim`), the page reloads onto it, and the app asks for updates **every 5 minutes, when it returns to the foreground and when the device comes back online** (`src/lib/pwa.ts`). No Vercel cache clearing is needed (hashed files; `index.html` and `sw.js` are always revalidated).
 - The first deployment that contains this still needs one manual refresh on each device that has the old version (hard reload, or DevTools → Application → Service Workers → Unregister).
+
+## Dialogs and pickers (fix)
+- Pickers and dialogs inside glass cards were sized/placed relative to the card (a `backdrop-filter` parent captures `position: fixed` children), so the Qualification/Division picker in the doctor form looked clipped and half-transparent. All overlays (`SearchSelect`, `ConfirmDialog`, `ReassignDialog`) now render through a `Portal` on `<body>` with a solid panel; a test guards it.
+- Profile page: spacing between the profile, contact and edit cards, and the contact list's label/value layout, fixed.

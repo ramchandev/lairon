@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { ChevronDown, Check, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { inputCls } from './form-styles'
+import { Portal } from './Portal'
 
 export interface Option {
   value: string
@@ -74,93 +75,95 @@ export function SearchSelect({
       </button>
 
       {open && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-[#142033]/40 sm:items-center sm:p-4"
-          onMouseDown={close}
-        >
+        <Portal>
           <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={title ?? placeholder}
-            onMouseDown={(e) => e.stopPropagation()}
-            className="glass flex max-h-[80vh] w-full flex-col rounded-b-none bg-white/95 sm:max-w-md sm:rounded-b-[18px]"
+            className="fixed inset-0 z-50 flex items-end justify-center bg-[#142033]/40 sm:items-center sm:p-4"
+            onMouseDown={close}
           >
-            <div className="flex items-center justify-between gap-2 p-4 pb-2">
-              <h2 className="font-extrabold">{title ?? placeholder}</h2>
-              <button
-                type="button"
-                onClick={close}
-                aria-label="Close"
-                className="grid size-9 place-items-center rounded-lg"
-              >
-                <X className="size-5" />
-              </button>
-            </div>
-            {note && <p className="px-4 pb-2 text-xs text-muted">{note}</p>}
-            {options.length > SEARCH_THRESHOLD && !otherMode && (
-              <div className="px-4 pb-2">
-                <input
-                  autoFocus
-                  type="search"
-                  placeholder="Search"
-                  aria-label="Search options"
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  className={inputCls}
-                />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label={title ?? placeholder}
+              onMouseDown={(e) => e.stopPropagation()}
+              className="border border-line bg-white shadow-[0_24px_60px_rgba(20,32,51,.28)] flex max-h-[80vh] w-full flex-col rounded-t-[22px] pb-[env(safe-area-inset-bottom)] sm:max-w-md sm:rounded-[22px]"
+            >
+              <div className="flex items-center justify-between gap-2 p-4 pb-2">
+                <h2 className="font-extrabold">{title ?? placeholder}</h2>
+                <button
+                  type="button"
+                  onClick={close}
+                  aria-label="Close"
+                  className="grid size-9 place-items-center rounded-lg"
+                >
+                  <X className="size-5" />
+                </button>
               </div>
-            )}
-            <ul className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
-              {!otherMode &&
-                filtered.map((o) => (
-                  <li key={o.value}>
-                    <button
-                      type="button"
-                      onClick={() => pick(o)}
-                      className="flex min-h-11 w-full items-center justify-between gap-2 rounded-lg px-3 text-left hover:bg-primary-soft"
-                    >
-                      <span>{o.label}</span>
-                      {o.value === value && <Check className="size-4 text-primary" />}
-                    </button>
-                  </li>
-                ))}
-              {!otherMode && filtered.length === 0 && (
-                <li className="px-3 py-4 text-sm text-muted">No matches</li>
-              )}
-              {allowOther && !otherMode && (
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => setOtherMode(true)}
-                    className="min-h-11 w-full rounded-lg px-3 text-left font-semibold text-primary hover:bg-primary-soft"
-                  >
-                    Others…
-                  </button>
-                </li>
-              )}
-              {otherMode && (
-                <li className="space-y-3 px-2 pt-2">
+              {note && <p className="px-4 pb-2 text-xs text-muted">{note}</p>}
+              {options.length > SEARCH_THRESHOLD && !otherMode && (
+                <div className="px-4 pb-2">
                   <input
                     autoFocus
-                    aria-label="Other value"
-                    placeholder="Type the value"
-                    value={otherText}
-                    onChange={(e) => setOtherText(e.target.value)}
+                    type="search"
+                    placeholder="Search"
+                    aria-label="Search options"
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
                     className={inputCls}
                   />
-                  <button
-                    type="button"
-                    disabled={!otherText.trim()}
-                    onClick={() => pick({ value: otherText.trim(), label: otherText.trim() })}
-                    className="min-h-11 w-full rounded-control bg-primary font-semibold text-white disabled:opacity-50"
-                  >
-                    Use this value
-                  </button>
-                </li>
+                </div>
               )}
-            </ul>
+              <ul className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
+                {!otherMode &&
+                  filtered.map((o) => (
+                    <li key={o.value}>
+                      <button
+                        type="button"
+                        onClick={() => pick(o)}
+                        className="flex min-h-11 w-full items-center justify-between gap-2 rounded-lg px-3 text-left hover:bg-primary-soft"
+                      >
+                        <span>{o.label}</span>
+                        {o.value === value && <Check className="size-4 text-primary" />}
+                      </button>
+                    </li>
+                  ))}
+                {!otherMode && filtered.length === 0 && (
+                  <li className="px-3 py-4 text-sm text-muted">No matches</li>
+                )}
+                {allowOther && !otherMode && (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => setOtherMode(true)}
+                      className="min-h-11 w-full rounded-lg px-3 text-left font-semibold text-primary hover:bg-primary-soft"
+                    >
+                      Others…
+                    </button>
+                  </li>
+                )}
+                {otherMode && (
+                  <li className="space-y-3 px-2 pt-2">
+                    <input
+                      autoFocus
+                      aria-label="Other value"
+                      placeholder="Type the value"
+                      value={otherText}
+                      onChange={(e) => setOtherText(e.target.value)}
+                      className={inputCls}
+                    />
+                    <button
+                      type="button"
+                      disabled={!otherText.trim()}
+                      onClick={() => pick({ value: otherText.trim(), label: otherText.trim() })}
+                      className="min-h-11 w-full rounded-control bg-primary font-semibold text-white disabled:opacity-50"
+                    >
+                      Use this value
+                    </button>
+                  </li>
+                )}
+              </ul>
+            </div>
           </div>
-        </div>
+        </Portal>
       )}
     </>
   )

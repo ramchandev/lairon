@@ -1,3 +1,4 @@
+import { Portal } from './Portal'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -45,54 +46,56 @@ function DialogBody({
   const disabled = busy || (needsReason && reason.trim().length === 0)
 
   return (
-    <div
-      className="fixed inset-0 z-50 grid place-items-center bg-[#142033]/40 p-4"
-      onMouseDown={onCancel}
-    >
+    <Portal>
       <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="confirm-title"
-        className="glass w-full max-w-sm rounded-modal bg-white/90 p-5"
-        onMouseDown={(e) => e.stopPropagation()}
+        className="fixed inset-0 z-50 grid place-items-center bg-[#142033]/40 p-4"
+        onMouseDown={onCancel}
       >
-        <h2 id="confirm-title" className="text-lg font-extrabold tracking-tight">
-          {title}
-        </h2>
-        {description && <div className="mt-1.5 text-sm text-ink-2">{description}</div>}
-        {reasonLabel && (
-          <label className="mt-3 block text-sm font-semibold">
-            {reasonLabel}
-            <textarea
-              className="mt-1 w-full rounded-control border border-line-2 bg-white/80 p-3 font-normal outline-none focus:border-primary"
-              rows={3}
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-            />
-          </label>
-        )}
-        <div className="mt-5 flex justify-end gap-2">
-          <button
-            ref={cancelRef}
-            type="button"
-            onClick={onCancel}
-            className="min-h-11 rounded-control border border-line-2 bg-white/70 px-4 font-semibold"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => onConfirm(needsReason ? reason.trim() : undefined)}
-            className={cn(
-              'min-h-11 rounded-control px-4 font-semibold text-white disabled:opacity-50',
-              tone === 'danger' ? 'bg-danger' : 'bg-primary',
-            )}
-          >
-            {busy ? 'Please wait…' : confirmLabel}
-          </button>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-title"
+          className="border border-line bg-white shadow-[0_24px_60px_rgba(20,32,51,.28)] w-full max-w-sm rounded-modal p-5"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <h2 id="confirm-title" className="text-lg font-extrabold tracking-tight">
+            {title}
+          </h2>
+          {description && <div className="mt-1.5 text-sm text-ink-2">{description}</div>}
+          {reasonLabel && (
+            <label className="mt-3 block text-sm font-semibold">
+              {reasonLabel}
+              <textarea
+                className="mt-1 w-full rounded-control border border-line-2 bg-white/80 p-3 font-normal outline-none focus:border-primary"
+                rows={3}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+              />
+            </label>
+          )}
+          <div className="mt-5 flex justify-end gap-2">
+            <button
+              ref={cancelRef}
+              type="button"
+              onClick={onCancel}
+              className="min-h-11 rounded-control border border-line-2 bg-white/70 px-4 font-semibold"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onConfirm(needsReason ? reason.trim() : undefined)}
+              className={cn(
+                'min-h-11 rounded-control px-4 font-semibold text-white disabled:opacity-50',
+                tone === 'danger' ? 'bg-danger' : 'bg-primary',
+              )}
+            >
+              {busy ? 'Please wait…' : confirmLabel}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </Portal>
   )
 }

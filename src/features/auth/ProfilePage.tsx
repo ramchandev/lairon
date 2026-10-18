@@ -113,7 +113,7 @@ export function ProfilePage() {
         </div>
       </section>
 
-      <section className="glass card">
+      <section className="glass card mb-3.5">
         <ul className="kv">
           <li>
             <Phone size={20} aria-hidden />
@@ -135,7 +135,7 @@ export function ProfilePage() {
         </p>
       </section>
 
-      <form onSubmit={handleSubmit(onSave)} className="glass form-card" noValidate>
+      <form onSubmit={handleSubmit(onSave)} className="glass form-card mb-3.5" noValidate>
         <h2 className="sec-t">Edit profile</h2>
         <div className="grid-2">
           <Field label="Name" full error={errors.full_name?.message}>
