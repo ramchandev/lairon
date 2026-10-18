@@ -33,5 +33,14 @@ export const ROLE_META: Record<
   staff: { label: 'Staff', plural: 'Staffs', hasArea: true, hasBio: true },
   driver: { label: 'Driver', plural: 'Drivers', hasArea: false, hasBio: true },
   manager: { label: 'Doctor’s Manager', plural: 'Doctor’s Managers', hasArea: true, hasBio: false },
-  admin: { label: 'Admin', plural: 'Admins', hasArea: false, hasBio: false },
+  admin: { label: 'Super Admin', plural: 'Super Admins', hasArea: false, hasBio: false },
 }
+
+/** List page of each role (each has its own link under People in the admin navigation). */
+export const ROLE_PATH: Record<ManagedRole, string> = {
+  staff: 'staff',
+  driver: 'drivers',
+  manager: 'managers',
+  admin: 'super-admins',
+}
+export const roleListUrl = (role: ManagedRole) => `/admin/${ROLE_PATH[role]}`

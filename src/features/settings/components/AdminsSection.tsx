@@ -12,13 +12,13 @@ import { Avatar, CallLink, visibleEmail } from '@/features/users/components'
 type Pending = { user: UserRow; action: 'deactivate' | 'reactivate' | 'resend_invite' }
 const COPY = {
   deactivate: {
-    title: 'Deactivate this admin?',
+    title: 'Deactivate this super admin?',
     confirm: 'Deactivate',
     tone: 'danger' as const,
     body: 'They are signed out and can’t sign in until reactivated.',
   },
   reactivate: {
-    title: 'Reactivate this admin?',
+    title: 'Reactivate this super admin?',
     confirm: 'Reactivate',
     tone: 'primary' as const,
     body: 'They can sign in again.',
@@ -43,14 +43,14 @@ export function AdminsSection() {
     <section className="glass space-y-3 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="font-extrabold">Admins</h2>
+          <h2 className="font-extrabold">Super Admins</h2>
           <p className="text-sm text-muted">People who can manage everything in LAIRON EZ.</p>
         </div>
         <Link
           to="/admin/users/new?role=admin"
           className="inline-flex min-h-10 items-center gap-2 rounded-control bg-primary px-4 text-sm font-semibold text-white"
         >
-          <Plus className="size-4" /> Add admin
+          <Plus className="size-4" /> Add Super Admin
         </Link>
       </div>
       {isLoading ? (
@@ -73,7 +73,7 @@ export function AdminsSection() {
               </div>
               <div className="flex flex-wrap gap-1">
                 <IconLink
-                  to={`/admin/users/${u.id}/edit`}
+                  to={`/admin/users/${u.id}/edit?role=admin`}
                   label={`Edit ${u.full_name}`}
                   icon={Pencil}
                 />

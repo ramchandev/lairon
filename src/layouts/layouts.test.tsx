@@ -33,7 +33,8 @@ function mount(layout: React.ReactNode, path: string, children: RouteObject[], a
 }
 const adminRoutes: RouteObject[] = [
   { index: true, ...page('Dashboard') },
-  { path: 'users', ...page('Users') },
+  { path: 'drivers', ...page('Drivers') },
+  { path: 'staff', ...page('Staffs') },
   { path: 'vehicles/new', ...page('Add Vehicle', { sub: true, back: '/admin/vehicles' }) },
 ]
 
@@ -56,8 +57,11 @@ describe('AdminLayout', () => {
       'Service Requests3',
       'Starter Packs2',
       'Trip Duty1',
-      'Users',
+      'Drivers',
+      'Staffs',
+      'Managers',
       'Doctors',
+      'Super Admins',
       'Vehicles',
       'Divisions',
       'Products',
@@ -71,7 +75,7 @@ describe('AdminLayout', () => {
   })
 
   it('has a 5-tab bottom bar and marks "More" active on the pages it leads to', () => {
-    mount(<AdminLayout />, '/admin', adminRoutes, '/admin/users')
+    mount(<AdminLayout />, '/admin', adminRoutes, '/admin/staff')
     const bar = screen.getByRole('navigation', { name: 'Primary' })
     expect(
       within(bar)
@@ -83,9 +87,9 @@ describe('AdminLayout', () => {
   })
 
   it('shows the breadcrumb "Admin › Section" on main pages', () => {
-    mount(<AdminLayout />, '/admin', adminRoutes, '/admin/users')
+    mount(<AdminLayout />, '/admin', adminRoutes, '/admin/staff')
     expect(screen.getByText('Admin', { selector: 'span' })).toBeInTheDocument()
-    expect(screen.getAllByText('Users', { selector: 'b' })).toHaveLength(1)
+    expect(screen.getAllByText('Staffs', { selector: 'b' })).toHaveLength(1)
   })
 
   it('on a sub-page: ← and the title replace the brand, and the bottom bar is hidden', () => {

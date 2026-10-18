@@ -1,5 +1,8 @@
 import {
+  BriefcaseMedical,
   CarFront,
+  IdCard,
+  ShieldCheck,
   ClipboardList,
   Grid2x2,
   LayoutDashboard,
@@ -17,6 +20,9 @@ import {
  * The approved admin navigation, copied from design/lairon-ez-prototype.html (`NAV`, `BOTTOM`, `MORE_ROOTS`).
  * `key` is the prototype's route name; `root` is this app's URL segment. A test compares this file against the HTML,
  * so the two cannot drift apart unnoticed.
+ *
+ * One deliberate change from the HTML (requested by the owner): the single "Users" link under People is replaced by separate
+ * links — Drivers, Staffs, Managers, Doctors and Super Admins — each opening its own list. Everything else is as approved.
  */
 export interface AdminNavItem {
   key: string
@@ -54,8 +60,11 @@ export const ADMIN_NAV: { group: string; items: AdminNavItem[] }[] = [
   {
     group: 'People',
     items: [
-      { key: 'users', root: 'users', label: 'Users', icon: Users },
+      { key: 'drivers', root: 'drivers', label: 'Drivers', icon: IdCard },
+      { key: 'staff', root: 'staff', label: 'Staffs', icon: Users },
+      { key: 'managers', root: 'managers', label: 'Managers', icon: BriefcaseMedical },
       { key: 'doctors', root: 'doctors', label: 'Doctors', icon: Stethoscope },
+      { key: 'super-admins', root: 'super-admins', label: 'Super Admins', icon: ShieldCheck },
     ],
   },
   {
@@ -80,7 +89,10 @@ export const ADMIN_BOTTOM: { key: string; root: string; label: string; icon: Luc
 /** Pages the "More" tab leads to (the prototype's list) — plus the two extra admin pages this app adds under More. */
 export const MORE_ROOTS = [
   'more',
-  'users',
+  'drivers',
+  'staff',
+  'managers',
+  'super-admins',
   'doctors',
   'vehicles',
   'divisions',
@@ -92,6 +104,14 @@ export const MORE_ROOTS = [
 ]
 
 export const adminHref = (root: string) => (root ? `/admin/${root}` : '/admin')
-/** First path segment after /admin ('' for the dashboard). */
-export const adminRoot = (pathname: string) =>
-  pathname.replace(/^\/admin\/?/, '').split('/')[0] ?? ''
+/** First path segment after /admin ('' for the dashboard). User forms (/users/new?role=…) belong to that role's link. */
+export const adminRoot = (pathname: string, search = '') => {
+  const seg = pathname.replace(/^\/admin\/?/, '').split('/')[0] ?? ''
+  if (seg !== 'users') return seg
+  const role = new URLSearchParams(search).get('role')
+  return (
+    ({ driver: 'drivers', manager: 'managers', admin: 'super-admins' } as Record<string, string>)[
+      role ?? ''
+    ] ?? 'staff'
+  )
+}

@@ -17,13 +17,13 @@ import { BottomNav, Brand, TopBar, iconBtn, useRouteChrome } from './chrome'
  */
 export function AdminLayout() {
   const { profile, signOut } = useAuth()
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const toast = useToast()
   const { sub, title } = useRouteChrome()
   const kpi = useDashboard().data
   const [confirmOut, setConfirmOut] = useState(false)
 
-  const root = adminRoot(pathname)
+  const root = adminRoot(pathname, search)
   const counts = {
     requests: kpi?.pending_service_requests ?? 0,
     starter: kpi?.pending_starter_packs ?? 0,

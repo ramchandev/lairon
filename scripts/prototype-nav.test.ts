@@ -36,7 +36,16 @@ interface ProtoItem {
 
 describe('admin navigation matches the approved HTML', () => {
   const db = { requests: [], starter: [], leaves: [] }
-  const protoNav = evalArray<{ group: string; items: ProtoItem[] }[]>(block('NAV'), { db })
+  const rawNav = evalArray<{ group: string; items: ProtoItem[] }[]>(block('NAV'), { db })
+  // The one deliberate change from the HTML (owner's request): People shows separate links instead of a single "Users".
+  const PEOPLE: ProtoItem[] = [
+    { r: 'drivers', label: 'Drivers', icon: 'id-card' },
+    { r: 'staff', label: 'Staffs', icon: 'users' },
+    { r: 'managers', label: 'Managers', icon: 'briefcase-medical' },
+    { r: 'doctors', label: 'Doctors', icon: 'stethoscope' },
+    { r: 'super-admins', label: 'Super Admins', icon: 'shield-check' },
+  ]
+  const protoNav = rawNav.map((g) => (g.group === 'People' ? { ...g, items: PEOPLE } : g))
   const protoBottom = evalArray<ProtoItem[]>(block('BOTTOM'))
   const protoMore = evalArray<string[]>(block('MORE_ROOTS'))
 
@@ -66,10 +75,15 @@ describe('admin navigation matches the approved HTML', () => {
   })
 
   it('makes "More" active on the same pages (plus the two admin pages this app adds under it)', () => {
-    for (const r of protoMore)
+    for (const r of protoMore) {
+      if (r === 'users') {
+        for (const k of ['drivers', 'staff', 'managers']) expect(MORE_ROOTS).toContain(k)
+        continue
+      }
       expect(MORE_ROOTS).toContain(
         r === 'more' ? 'more' : ADMIN_NAV.flatMap((g) => g.items).find((i) => i.key === r)!.root,
       )
+    }
   })
 })
 

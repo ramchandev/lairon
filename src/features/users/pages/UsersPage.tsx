@@ -1,17 +1,18 @@
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Navigate, useSearchParams } from 'react-router-dom'
+import { useAuth } from '@/app/AuthProvider'
 import { Inbox, KeyRound, LogOut, Mail, Pencil, UserCheck, UserX } from 'lucide-react'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { DataTable, type Column } from '@/components/DataTable'
 import { AddButton, Fab, IconButton, IconLink, Person, Tag } from '@/components/ListParts'
 import { EmptyState } from '@/components/EmptyState'
 import { PageHeader } from '@/components/FormPage'
-import { ChipFilter, SearchInput, Tabs } from '@/components/ListControls'
+import { ChipFilter, SearchInput } from '@/components/ListControls'
 import { ActiveBadge } from '@/components/StatusBadge'
 import { useToast } from '@/components/Toast'
-import { useUserAction, useUserCounts, useUsers, type UserRow } from '../api'
+import { useUserAction, useUsers, type UserRow } from '../api'
 import { Avatar, CallLink, visibleEmail } from '../components'
-import { ROLE_META, type ManagedRole } from '../schemas'
+import { ROLE_META, ROLE_PATH, roleListUrl, type ManagedRole } from '../schemas'
 
 type Pending = {
   user: UserRow
@@ -47,13 +48,29 @@ const COPY: Record<
   },
 }
 
-export function UsersPage() {
-  const [params, setParams] = useSearchParams()
-  const role = (
-    ['staff', 'driver', 'manager'].includes(params.get('tab') ?? '') ? params.get('tab') : 'staff'
-  ) as ManagedRole
+const SUBTITLE: Record<ManagedRole, string> = {
+  staff: 'Field staff who raise starter packs',
+  driver: 'Chauffeurs who log duties, week offs and leave',
+  manager: 'Doctor’s managers who raise service requests',
+  admin: 'People who can manage everything in LAIRON EZ',
+}
+
+export const StaffPage = () => <UsersPage role="staff" />
+export const DriversPage = () => <UsersPage role="driver" />
+export const ManagersPage = () => <UsersPage role="manager" />
+export const SuperAdminsPage = () => <UsersPage role="admin" />
+/** Old /admin/users?tab=… links land on the matching role page. */
+export function UsersRedirect() {
+  const [params] = useSearchParams()
+  const t = params.get('tab') ?? params.get('role') ?? 'staff'
+  const role = (t in ROLE_PATH ? t : 'staff') as ManagedRole
+  return <Navigate to={roleListUrl(role)} replace />
+}
+
+/** One page per role, each reached from its own link under People (no tabs). */
+export function UsersPage({ role }: { role: ManagedRole }) {
+  const { profile } = useAuth()
   const { data, isLoading } = useUsers(role)
-  const counts = useUserCounts()
   const act = useUserAction()
   const toast = useToast()
   const [q, setQ] = useState('')
@@ -117,24 +134,16 @@ export function UsersPage() {
   return (
     <>
       <PageHeader
-        title="Users"
-        subtitle="Staffs, drivers and doctor’s managers"
+        title={meta.plural}
+        subtitle={SUBTITLE[role]}
         action={<AddButton to={addTo} label={addLabel} />}
       />
-      <Tabs
-        value={role}
-        onChange={(k) => {
-          setParams({ tab: k })
-          setQ('')
-        }}
-        tabs={(['staff', 'driver', 'manager'] as const).map((r) => ({
-          key: r,
-          label: ROLE_META[r].plural,
-          count: counts.data?.[r],
-        }))}
-      />
       <div className="toolbar">
-        <SearchInput value={q} onChange={setQ} placeholder="Search users…" />
+        <SearchInput
+          value={q}
+          onChange={setQ}
+          placeholder={`Search ${meta.plural.toLowerCase()}…`}
+        />
         <ChipFilter
           value={status}
           onChange={setStatus}
@@ -164,25 +173,25 @@ export function UsersPage() {
         actions={(u) => (
           <>
             <IconLink
-              to={`/admin/users/${u.id}/edit`}
+              to={`/admin/users/${u.id}/edit?role=${role}`}
               label={`Edit ${u.full_name}`}
               icon={Pencil}
             />
-            {role !== 'manager' && u.is_active && (
+            {role !== 'manager' && u.is_active && u.id !== profile?.id && (
               <IconButton
                 label={`Resend invite to ${u.full_name}`}
                 icon={Mail}
                 onClick={() => setPending({ user: u, action: 'resend_invite' })}
               />
             )}
-            {u.is_active && (
+            {u.is_active && u.id !== profile?.id && (
               <IconButton
                 label={`Sign out ${u.full_name}`}
                 icon={LogOut}
                 onClick={() => setPending({ user: u, action: 'force_logout' })}
               />
             )}
-            {u.is_active ? (
+            {u.id === profile?.id ? null : u.is_active ? (
               <IconButton
                 danger
                 label={`Deactivate ${u.full_name}`}

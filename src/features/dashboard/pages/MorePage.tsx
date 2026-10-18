@@ -18,18 +18,21 @@ export const useMoreCounts = () =>
   useQuery({
     queryKey: ['more-counts'],
     queryFn: async () => {
-      const [users, doctors, vehicles, divisions, products] = await Promise.all([
+      const [roles, doctors, vehicles, divisions, products] = await Promise.all([
         supabase
           .from('profiles')
-          .select('id', { count: 'exact', head: true })
-          .in('role', ['staff', 'driver', 'manager'])
-          .then((r) => r.count ?? 0),
+          .select('role')
+          .then((r) => {
+            const n: Record<string, number> = {}
+            for (const p of r.data ?? []) n[p.role] = (n[p.role] ?? 0) + 1
+            return n
+          }),
         count('doctors'),
         count('vehicles'),
         count('divisions'),
         count('products'),
       ])
-      return { users, doctors, vehicles, divisions, products }
+      return { roles, doctors, vehicles, divisions, products }
     },
   })
 
@@ -59,11 +62,25 @@ export function MorePage() {
     tone: keyof typeof TONE
   }[] = [
     {
-      key: 'users',
-      root: 'users',
-      label: 'Users',
-      sub: `${c?.users ?? '…'} staffs, drivers, managers`,
+      key: 'drivers',
+      root: 'drivers',
+      label: 'Drivers',
+      sub: `${c?.roles.driver ?? '…'} drivers`,
+      tone: 'info',
+    },
+    {
+      key: 'staff',
+      root: 'staff',
+      label: 'Staffs',
+      sub: `${c?.roles.staff ?? '…'} staffs`,
       tone: 'teal',
+    },
+    {
+      key: 'managers',
+      root: 'managers',
+      label: 'Managers',
+      sub: `${c?.roles.manager ?? '…'} doctor’s managers`,
+      tone: 'violet',
     },
     {
       key: 'doctors',
@@ -92,6 +109,13 @@ export function MorePage() {
       label: 'Products',
       sub: `${c?.products ?? '…'} products`,
       tone: 'ok',
+    },
+    {
+      key: 'super-admins',
+      root: 'super-admins',
+      label: 'Super Admins',
+      sub: `${c?.roles.admin ?? '…'} super admins`,
+      tone: 'danger',
     },
     {
       key: 'dropdowns',

@@ -15,7 +15,7 @@ import { formatPhone } from '@/lib/phone'
 import { useCreateUser, useUpdateUser, useUser } from '../api'
 import { visibleEmail } from '../components'
 import { useSubTitle } from '@/layouts/chrome'
-import { ROLE_META, userSchema, type ManagedRole, type UserForm } from '../schemas'
+import { ROLE_META, roleListUrl, userSchema, type ManagedRole, type UserForm } from '../schemas'
 
 export function UserFormPage() {
   const { id } = useParams()
@@ -66,8 +66,7 @@ function Inner({
     formState: { errors, isDirty },
   } = useForm<UserForm>({ resolver: zodResolver(userSchema(role)), defaultValues: defaults })
   const fullName = useWatch({ control, name: 'full_name' })
-  const back = () =>
-    navigate(role === 'admin' ? '/admin/settings' : `/admin/users?tab=${role}`, { replace: true })
+  const back = () => navigate(roleListUrl(role), { replace: true })
 
   const [photo, setPhoto] = useState<Blob | null>(null)
   const [photoRemoved, setPhotoRemoved] = useState(false)

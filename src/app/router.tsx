@@ -135,18 +135,39 @@ export const router = createBrowserRouter([
                 ),
               },
               {
+                path: 'drivers',
+                ...h('Drivers'),
+                ...page(() => import('@/features/users/pages/UsersPage'), 'DriversPage'),
+              },
+              {
+                path: 'staff',
+                ...h('Staffs'),
+                ...page(() => import('@/features/users/pages/UsersPage'), 'StaffPage'),
+              },
+              {
+                path: 'managers',
+                ...h('Managers'),
+                ...page(() => import('@/features/users/pages/UsersPage'), 'ManagersPage'),
+              },
+              {
+                path: 'super-admins',
+                ...h('Super Admins'),
+                ...page(() => import('@/features/users/pages/UsersPage'), 'SuperAdminsPage'),
+              },
+              // Old links (/admin/users?tab=driver) keep working.
+              {
                 path: 'users',
                 ...h('Users'),
-                ...page(() => import('@/features/users/pages/UsersPage'), 'UsersPage'),
+                ...page(() => import('@/features/users/pages/UsersPage'), 'UsersRedirect'),
               },
               {
                 path: 'users/new',
-                ...sub('Add User', '/admin/users'),
+                ...sub('Add User', '/admin/staff'),
                 ...page(() => import('@/features/users/pages/UserFormPage'), 'UserFormPage'),
               },
               {
                 path: 'users/:id/edit',
-                ...sub('Edit User', '/admin/users'),
+                ...sub('Edit User', '/admin/staff'),
                 ...page(() => import('@/features/users/pages/UserFormPage'), 'UserFormPage'),
               },
               {

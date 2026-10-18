@@ -15,7 +15,7 @@ import { LeaveRequests } from '@/features/trip-duty/components/LeaveRequests'
 import { profileSchema, type ProfileForm } from './schemas'
 
 const ROLE_LABEL = {
-  admin: 'Admin',
+  admin: 'Super Admin',
   staff: 'Staff',
   driver: 'Driver',
   manager: 'Doctor’s Manager',
