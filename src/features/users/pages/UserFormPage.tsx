@@ -6,6 +6,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Copy, Eye, EyeOff, FileText, UserRound, Wand2 } from 'lucide-react'
 import { generatePassword } from '@/lib/password'
+import { loginInfoText } from '../loginInfo'
 import { Field, FormPage, Section } from '@/components/FormPage'
 import { PhotoField } from '@/components/PhotoField'
 import { useToast } from '@/components/Toast'
@@ -77,6 +78,9 @@ function Inner({
   } = useForm<UserForm>({ resolver: zodResolver(userSchema(role, !!id)), defaultValues: defaults })
   const fullName = useWatch({ control, name: 'full_name' })
   const passwordValue = useWatch({ control, name: 'password' })
+  const emailValue = useWatch({ control, name: 'email' })
+  // A locked (disabled) email field drops out of the form values, so fall back to the saved one.
+  const loginEmail = (emailValue || defaults.email || '').trim()
   const back = () => navigate(roleListUrl(role), { replace: true })
 
   const [showPw, setShowPw] = useState(false)
@@ -198,6 +202,7 @@ function Inner({
         </Field>
         {role === 'driver' && (
           <Field
+            full
             label={id ? 'New password' : 'Password'}
             required={!id}
             error={errors.password?.message}
@@ -210,7 +215,7 @@ function Inner({
             <div className="flex gap-2">
               <div className="input-group min-w-0 flex-1">
                 <input
-                  className={`${inputCls} !rounded-r-none mono`}
+                  className={`${inputCls} mono !rounded-r-none`}
                   type={showPw ? 'text' : 'password'}
                   autoComplete="new-password"
                   {...register('password')}
@@ -226,7 +231,7 @@ function Inner({
               </div>
               <button
                 type="button"
-                className="btn btn-ghost"
+                className="btn btn-ghost shrink-0"
                 onClick={() => {
                   setValue('password', generatePassword(), {
                     shouldDirty: true,
@@ -235,25 +240,31 @@ function Inner({
                   setShowPw(true)
                 }}
               >
-                <Wand2 aria-hidden /> <span className="hidden sm:inline">Generate</span>
-              </button>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                disabled={!passwordValue}
-                aria-label="Copy password"
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(passwordValue)
-                    toast('Password copied')
-                  } catch {
-                    toast('Could not copy — select the password and copy it', 'error')
-                  }
-                }}
-              >
-                <Copy aria-hidden /> <span className="hidden sm:inline">Copy</span>
+                <Wand2 aria-hidden /> Generate
               </button>
             </div>
+            <button
+              type="button"
+              className="btn btn-ghost mt-2 w-full sm:w-auto"
+              disabled={!passwordValue || !loginEmail}
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(
+                    loginInfoText({
+                      name: fullName,
+                      url: window.location.origin,
+                      email: loginEmail,
+                      password: passwordValue,
+                    }),
+                  )
+                  toast('Login info copied — paste it into a message')
+                } catch {
+                  toast('Could not copy to the clipboard', 'error')
+                }
+              }}
+            >
+              <Copy aria-hidden /> Copy Full Login Info
+            </button>
           </Field>
         )}
         {meta.hasArea && (
