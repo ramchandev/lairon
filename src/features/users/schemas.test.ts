@@ -21,8 +21,11 @@ describe('driver password', () => {
     expect(userSchema('driver', true).safeParse(driver).success).toBe(true)
     expect(userSchema('driver', true).safeParse({ ...driver, password: 'abc' }).success).toBe(false)
   })
-  it('is not needed for other roles', () => {
-    expect(userSchema('staff').safeParse({ ...driver }).success).toBe(true)
+  it('applies to staff too, but not to managers or super admins', () => {
+    expect(userSchema('staff').safeParse(driver).success).toBe(false)
+    expect(userSchema('staff').safeParse({ ...driver, password: 'longenough' }).success).toBe(true)
+    expect(userSchema('manager').safeParse(driver).success).toBe(true)
+    expect(userSchema('admin').safeParse(driver).success).toBe(true)
   })
 })
 
@@ -30,7 +33,9 @@ describe('userSchema', () => {
   it('requires email for staff and driver', () => {
     expect(userSchema('staff').safeParse(base).success).toBe(false)
     expect(userSchema('driver').safeParse(base).success).toBe(false)
-    expect(userSchema('staff').safeParse({ ...base, email: 'a@b.in' }).success).toBe(true)
+    expect(
+      userSchema('staff').safeParse({ ...base, email: 'a@b.in', password: 'longenough' }).success,
+    ).toBe(true)
   })
   it('makes email optional for managers but validates it when present', () => {
     expect(userSchema('manager').safeParse(base).success).toBe(true)

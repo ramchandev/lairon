@@ -1,5 +1,6 @@
 /** Ready-to-send login details for a new driver (paste into WhatsApp / email). */
 export function loginInfoText(i: {
+  role: 'driver' | 'staff'
   name: string
   url: string
   email: string
@@ -9,13 +10,15 @@ export function loginInfoText(i: {
   return [
     `Hi ${first},`,
     '',
-    'Your LAIRON EZ driver account is ready. Sign in with these details:',
+    `Your LAIRON EZ ${i.role} account is ready. Sign in with these details:`,
     '',
     `Login URL: ${i.url}`,
     `Username: ${i.email}`,
     `Password: ${i.password}`,
     '',
-    'Please keep these details private. You can use the app on your phone from the same link.',
+    i.role === 'staff'
+      ? 'After signing in, tap New Pack to raise a starter pack for a doctor. Please keep these details private. You can use the app on your phone from the same link.'
+      : 'Please keep these details private. You can use the app on your phone from the same link.',
     '',
     'Thanks,',
     'LAIRON Admin',

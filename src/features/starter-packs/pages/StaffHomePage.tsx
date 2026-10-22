@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ClipboardList, PackagePlus } from 'lucide-react'
+import { PackagePlus } from 'lucide-react'
 import { useAuth } from '@/app/AuthProvider'
 import { fmtDate } from '@/lib/format'
 import { usePacks } from '../api'
@@ -30,22 +30,20 @@ export function StaffHomePage() {
           </h1>
         </div>
       </div>
-      <div className="act-tiles !grid-cols-2">
-        <Link to="/staff/new" className="act-tile glass">
-          <span className="k-ic t-info">
-            <PackagePlus size={22} />
-          </span>
-          <b>New starter pack</b>
-          <span className="muted text-[13px]">For a doctor</span>
+      <section className="duty-hero" aria-label="Make a starter pack">
+        <div className="dh-top">
+          <span className="dh-pill">Starter pack</span>
+        </div>
+        <div className="dh-route">
+          <span>Meeting a doctor?</span>
+        </div>
+        <p className="mt-1 mb-4 text-[15px] text-white/90">
+          Pick the doctor, add the products and submit. Your name and area are already filled in.
+        </p>
+        <Link to="/staff/new" className="btn btn-white btn-lg">
+          <PackagePlus aria-hidden /> New Starter Pack
         </Link>
-        <Link to="/staff/requests" className="act-tile glass">
-          <span className="k-ic t-violet">
-            <ClipboardList size={22} />
-          </span>
-          <b>My requests</b>
-          <span className="muted text-[13px]">Track status</span>
-        </Link>
-      </div>
+      </section>
       <h2 className="sec-h">Overview</h2>
       <div className="stats !grid-cols-2">
         <div className="stat">

@@ -189,3 +189,8 @@ The portal's navigation now matches `design/lairon-ez-prototype.html` (pixel-com
 
 ## PDF export failed in production (fix)
 - Cause: the PDF engine's layout step (yoga) is WebAssembly, and the production Content-Security-Policy blocked WebAssembly (`script-src 'self'` only). It worked in development, which has no CSP. Fix: `script-src 'self' 'wasm-unsafe-eval'` (allows WASM only; string `eval()` stays blocked) in `deploy/headers.ts`, `vercel.ts` and the generated `public/_headers`. Needs a redeploy.
+
+## Staff logins (sales reps)
+- **Staffs are created like Drivers**: the admin sets a password (Generate / eye / **Copy Full Login Info**), the account works immediately and **no email is sent**; the import sheet needs a Password column for Staffs and Drivers. Super Admins still get an invite; Managers sign in by phone. Password block in the user form: password in the right column, **Generate** and **Copy Full Login Info** on a second line below it.
+- **Staff app is built around one job — making Starter Packs**: Home opens with a hero "New Starter Pack" button; the form shows "Raising as {name} · {area}" already filled in (asks for the area only if the profile has none), then Doctor → Products → Submit. The login-info text names the role and points staff to **New Pack**.
+- Needs the `admin-create-user` function redeployed (`supabase functions deploy admin-create-user`).

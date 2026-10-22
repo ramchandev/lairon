@@ -21,6 +21,7 @@ import {
   MIN_PASSWORD,
   ROLE_META,
   roleListUrl,
+  usesPassword,
   userSchema,
   type ManagedRole,
   type UserForm,
@@ -117,8 +118,8 @@ function Inner({
             toast(
               role === 'manager'
                 ? 'Doctor’s Manager added'
-                : role === 'driver'
-                  ? 'Driver added — they can sign in with the password you set'
+                : usesPassword(role)
+                  ? `${meta.label} added — they can sign in with the password you set`
                   : 'User added — invite email sent',
             )
             back()
@@ -185,8 +186,8 @@ function Inner({
             emailLocked
               ? 'Email is the login identity and can’t be changed here.'
               : role !== 'manager'
-                ? role === 'driver'
-                  ? 'The driver signs in with this email and the password below. No email is sent.'
+                ? usesPassword(role)
+                  ? `The ${role} signs in with this email and the password. No email is sent.`
                   : 'Login invite will be sent to this email.'
                 : undefined
           }
@@ -200,38 +201,37 @@ function Inner({
             {...register('email')}
           />
         </Field>
-        {role === 'driver' && (
+        {usesPassword(role) && (
           <Field
-            full
             label={id ? 'New password' : 'Password'}
             required={!id}
             error={errors.password?.message}
             hint={
               id
-                ? 'Leave blank to keep the current password. Setting one signs the driver out of other devices.'
-                : `At least ${MIN_PASSWORD} characters. Tell the driver; they can’t see it again.`
+                ? `Leave blank to keep the current password. Setting one signs the ${role} out of other devices.`
+                : `At least ${MIN_PASSWORD} characters. Tell the ${role}; they can’t see it again.`
             }
           >
-            <div className="flex gap-2">
-              <div className="input-group min-w-0 flex-1">
-                <input
-                  className={`${inputCls} mono !rounded-r-none`}
-                  type={showPw ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  {...register('password')}
-                />
-                <button
-                  type="button"
-                  className="btn btn-ghost !rounded-l-none"
-                  aria-label={showPw ? 'Hide password' : 'Show password'}
-                  onClick={() => setShowPw((s) => !s)}
-                >
-                  {showPw ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
-                </button>
-              </div>
+            <div className="input-group">
+              <input
+                className={`${inputCls} mono !rounded-r-none`}
+                type={showPw ? 'text' : 'password'}
+                autoComplete="new-password"
+                {...register('password')}
+              />
               <button
                 type="button"
-                className="btn btn-ghost shrink-0"
+                className="btn btn-ghost !rounded-l-none"
+                aria-label={showPw ? 'Hide password' : 'Show password'}
+                onClick={() => setShowPw((s) => !s)}
+              >
+                {showPw ? <EyeOff aria-hidden /> : <Eye aria-hidden />}
+              </button>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
                 onClick={() => {
                   setValue('password', generatePassword(), {
                     shouldDirty: true,
@@ -242,29 +242,30 @@ function Inner({
               >
                 <Wand2 aria-hidden /> Generate
               </button>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                disabled={!passwordValue || !loginEmail}
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(
+                      loginInfoText({
+                        role: role === 'staff' ? 'staff' : 'driver',
+                        name: fullName,
+                        url: window.location.origin,
+                        email: loginEmail,
+                        password: passwordValue,
+                      }),
+                    )
+                    toast('Login info copied — paste it into a message')
+                  } catch {
+                    toast('Could not copy to the clipboard', 'error')
+                  }
+                }}
+              >
+                <Copy aria-hidden /> Copy Full Login Info
+              </button>
             </div>
-            <button
-              type="button"
-              className="btn btn-ghost mt-2 w-full sm:w-auto"
-              disabled={!passwordValue || !loginEmail}
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(
-                    loginInfoText({
-                      name: fullName,
-                      url: window.location.origin,
-                      email: loginEmail,
-                      password: passwordValue,
-                    }),
-                  )
-                  toast('Login info copied — paste it into a message')
-                } catch {
-                  toast('Could not copy to the clipboard', 'error')
-                }
-              }}
-            >
-              <Copy aria-hidden /> Copy Full Login Info
-            </button>
           </Field>
         )}
         {meta.hasArea && (

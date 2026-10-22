@@ -43,7 +43,8 @@ describe('users import', () => {
   }
   const run = (rows: unknown[][], c = ctx) =>
     parseUsers(
-      sheet(USER_FIELDS, [['Role', 'Full Name', 'Phone', 'Email', 'HQ'], ...rows]).records,
+      sheet(USER_FIELDS, [['Role', 'Full Name', 'Phone', 'Email', 'HQ', 'Password'], ...rows])
+        .records,
       c,
     ).rows
   const errs = (r: { issues: { severity: string; message: string }[] }) =>
@@ -51,8 +52,8 @@ describe('users import', () => {
 
   it('accepts good rows, defaults the role, normalises the phone and the HQ spelling', () => {
     const [a, b] = run([
-      ['', 'Karthik', 9840122345, 'k@x.in', 'chn'],
-      ['Driver', 'Ravi', '+91 98840 33456', 'r@x.in', ''],
+      ['', 'Karthik', 9840122345, 'k@x.in', 'chn', 'Staff@2026'],
+      ['Driver', 'Ravi', '+91 98840 33456', 'r@x.in', '', 'Driver@2026'],
     ])
     expect(errs(a)).toEqual([])
     expect(a).toMatchObject({ role: 'staff', phone: '+919840122345', hq: 'CHN' })
@@ -76,7 +77,7 @@ describe('users import', () => {
     expect(errs(rows[5])[0]).toMatch(/Super Admins can’t be imported/)
     expect(errs(rows[6])[0]).toMatch(/Unknown role/)
   })
-  it('drivers need a Password of 8+ characters; other roles ignore it with a warning', () => {
+  it('staffs and drivers need a Password of 8+ characters; other roles ignore it with a warning', () => {
     const head = ['Role', 'Full Name', 'Phone', 'Email', 'Password']
     const rows = parseUsers(
       sheet(USER_FIELDS, [
@@ -84,7 +85,7 @@ describe('users import', () => {
         ['Driver', 'A', '9840122345', 'a@x.in', ''],
         ['Driver', 'B', '9840122346', 'b@x.in', 'short'],
         ['Driver', 'C', '9840122347', 'c@x.in', 'Driver@2026'],
-        ['Staff', 'D', '9840122348', 'd@x.in', 'whatever123'],
+        ['Manager', 'D', '9840122348', '', 'whatever123'],
       ]).records,
       ctx,
     ).rows

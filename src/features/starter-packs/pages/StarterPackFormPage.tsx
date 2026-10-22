@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Link } from 'react-router-dom'
 import { CircleCheck, Pill, Plus, Stethoscope, Trash2, UserRound } from 'lucide-react'
 import { useAuth } from '@/app/AuthProvider'
+import { Avatar } from '@/components/Avatar'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Field, FormPage, Section } from '@/components/FormPage'
 import { SearchSelect } from '@/components/SearchSelect'
@@ -170,6 +171,56 @@ function Inner({
       onSubmit={onSubmit}
       saveLabel="Submit request"
     >
+      {isAdmin ? (
+        <Section stack title="Staff" icon={UserRound}>
+          <Field
+            label="Staff member"
+            required
+            error={errors.staff_name?.message}
+            hint="Raising this request on their behalf."
+          >
+            <select
+              className={inputCls}
+              value={staffId}
+              onChange={(e) => {
+                const s = staff.data?.find((x) => x.id === e.target.value)
+                setValue('staff_id', s?.id ?? '', mark)
+                setValue('staff_name', s?.full_name ?? '', mark)
+                setValue('staff_area', s?.area ?? '', mark)
+              }}
+            >
+              <option value="">Choose staff</option>
+              {staff.data
+                ?.filter((s) => s.is_active)
+                .map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.full_name}
+                  </option>
+                ))}
+            </select>
+          </Field>
+          <Field label="Staff area" required error={errors.staff_area?.message}>
+            <input className={inputCls} {...register('staff_area')} />
+          </Field>
+        </Section>
+      ) : (
+        <section className="glass notice flex-wrap" aria-label="Raising as">
+          <Avatar name={profile!.full_name} url={profile!.avatar_url} />
+          <div className="min-w-0 flex-1">
+            <p className="muted text-[13px]">Raising as</p>
+            <b className="block truncate">{profile!.full_name}</b>
+            {profile!.area && <span className="muted text-[13px]">{profile!.area}</span>}
+          </div>
+          {!profile!.area && (
+            <div className="w-full">
+              <Field label="Your area" required error={errors.staff_area?.message}>
+                <input className={inputCls} {...register('staff_area')} />
+              </Field>
+            </div>
+          )}
+        </section>
+      )}
+
       <Section stack title="Doctor" icon={Stethoscope}>
         <Field label="Date" required error={errors.request_date?.message}>
           <input type="date" className={inputCls} {...register('request_date')} />
@@ -206,44 +257,6 @@ function Inner({
             <input className={inputCls} {...register('doctor_area')} />
           </Field>
         </div>
-      </Section>
-
-      <Section stack title="Staff" icon={UserRound}>
-        {isAdmin ? (
-          <Field
-            label="Staff member"
-            required
-            error={errors.staff_name?.message}
-            hint="Raising this request on their behalf."
-          >
-            <select
-              className={inputCls}
-              value={staffId}
-              onChange={(e) => {
-                const s = staff.data?.find((x) => x.id === e.target.value)
-                setValue('staff_id', s?.id ?? '', mark)
-                setValue('staff_name', s?.full_name ?? '', mark)
-                setValue('staff_area', s?.area ?? '', mark)
-              }}
-            >
-              <option value="">Choose staff</option>
-              {staff.data
-                ?.filter((s) => s.is_active)
-                .map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.full_name}
-                  </option>
-                ))}
-            </select>
-          </Field>
-        ) : (
-          <Field label="Staff name">
-            <input className={`${inputCls} bg-muted-bg/60`} readOnly {...register('staff_name')} />
-          </Field>
-        )}
-        <Field label="Staff area" required error={errors.staff_area?.message}>
-          <input className={inputCls} {...register('staff_area')} />
-        </Field>
       </Section>
 
       <Section stack title="Products" icon={Pill}>

@@ -1,5 +1,5 @@
-// Admin creates a user: auth user + profile (+ invite email for admin/staff).
-// A DRIVER is created with a password the admin sets (no email is sent); managers sign in by phone.
+// Admin creates a user: auth user + profile (+ invite email for admin).
+// DRIVERS and STAFF are created with a password the admin sets (no email is sent); managers sign in by phone.
 import { admin, requireAdmin } from '../_shared/clients.ts'
 import { corsHeaders, json } from '../_shared/cors.ts'
 import { managerEmail, normalizePhone } from '../_shared/phone.ts'
@@ -24,8 +24,9 @@ Deno.serve(async (req) => {
   const phone = normalizePhone(b.phone)
   const email = text(b.email)?.toLowerCase() ?? null
   const password = typeof b.password === 'string' ? b.password : null
-  if (role === 'driver' && (!password || password.length < 8)) {
-    return json(req, { error: 'Set a password of at least 8 characters for the driver' }, 400)
+  const withPassword = role === 'driver' || role === 'staff'
+  if (withPassword && (!password || password.length < 8)) {
+    return json(req, { error: `Set a password of at least 8 characters for the ${role}` }, 400)
   }
   if (!fullName) return json(req, { error: 'Name is required' }, 400)
   if (!phone) return json(req, { error: 'Enter a valid 10-digit mobile number' }, 400)
@@ -50,8 +51,8 @@ Deno.serve(async (req) => {
     if (error || !data.user)
       return json(req, { error: error?.message ?? 'Could not create user' }, 400)
     userId = data.user.id
-  } else if (role === 'driver') {
-    // Driver: the admin sets the password, the account is active immediately, nothing is emailed.
+  } else if (withPassword) {
+    // Driver / staff: the admin sets the password, the account is active immediately, nothing is emailed.
     const { data, error } = await admin.auth.admin.createUser({
       email: email!,
       password: password!,

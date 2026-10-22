@@ -6,7 +6,7 @@ import { adminCreateUser } from '@/features/auth/api'
 import { useLookup } from '@/features/lookups/hooks'
 import { StatusBadge } from '@/components/StatusBadge'
 import { supabase } from '@/lib/supabase'
-import { ROLE_META, roleListUrl, type ManagedRole } from '../schemas'
+import { ROLE_META, roleListUrl, usesPassword, type ManagedRole } from '../schemas'
 import {
   parseUsers,
   USER_FIELDS,
@@ -35,7 +35,7 @@ export function UsersImportPage() {
 
   const cfg = useMemo<BulkConfig<UserRow>>(
     () => ({
-      intro: `Upload a sheet of ${defaultRole ? ROLE_META[defaultRole].plural.toLowerCase() : 'staffs, drivers and doctor’s managers'}. Staffs get a login invite by email; Drivers are created with the Password you give (no email is sent); Doctor’s Managers sign in with their phone. You review every row before anything is created.`,
+      intro: `Upload a sheet of ${defaultRole ? ROLE_META[defaultRole].plural.toLowerCase() : 'staffs, drivers and doctor’s managers'}. Staffs and Drivers are created with the Password you give (no email is sent); Doctor’s Managers sign in with their phone. You review every row before anything is created.`,
       fields: USER_FIELDS,
       templateFile: 'users-import-template.xlsx',
       templateHeader: USER_TEMPLATE_HEADER,
@@ -55,11 +55,8 @@ export function UsersImportPage() {
                 {defaultRole ? ` (blank = ${ROLE_META[defaultRole].label})` : ''}
               </li>
               <li>Phone: 10-digit mobile (+91 optional); must be new</li>
-              <li>
-                Email: required for Staff and Drivers (Staff get the invite there; it is the
-                Driver’s login)
-              </li>
-              <li>Password: required for Drivers (8+ characters), ignored for others</li>
+              <li>Email: required for Staffs and Drivers (it is their login)</li>
+              <li>Password: required for Staffs and Drivers (8+ characters), ignored for others</li>
             </ul>
           </div>
           <div>
@@ -124,7 +121,7 @@ export function UsersImportPage() {
               area: r.area || undefined,
               hq: r.hq || undefined,
               bio: r.bio || undefined,
-              password: r.role === 'driver' ? r.password : undefined,
+              password: r.role && usesPassword(r.role) ? r.password : undefined,
             })
             made++
             if (res.invite_link) links.push([r.full_name, r.email, res.invite_link])

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { normalizePhone } from '@/lib/phone'
 import { adminCreateUser, adminUserAction } from '@/features/auth/api'
-import type { ManagedRole, UserForm } from './schemas'
+import { usesPassword, type ManagedRole, type UserForm } from './schemas'
 
 export interface UserRow {
   id: string
@@ -76,7 +76,7 @@ export function useCreateUser(role: ManagedRole) {
         area: v.area || undefined,
         hq: v.hq || undefined,
         bio: v.bio || undefined,
-        password: role === 'driver' ? v.password : undefined,
+        password: usesPassword(role) ? v.password : undefined,
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   })
@@ -100,7 +100,7 @@ export function useUpdateUser(id: string, role: ManagedRole) {
         throw new Error(
           error.code === '23505' ? 'Another user already has this phone number.' : error.message,
         )
-      if (role === 'driver' && v.password) await adminUserAction('set_password', id, v.password)
+      if (usesPassword(role) && v.password) await adminUserAction('set_password', id, v.password)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   })

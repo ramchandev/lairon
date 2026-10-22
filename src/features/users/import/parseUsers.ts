@@ -8,7 +8,7 @@ import {
   type Rec,
 } from '@/features/bulk-import/sheet'
 import { normalizePhone } from '@/lib/phone'
-import type { ManagedRole } from '../schemas'
+import { usesPassword, type ManagedRole } from '../schemas'
 
 export const USER_FIELDS: FieldSpec[] = [
   { key: 'role', label: 'Role', aliases: ['usertype', 'type'] },
@@ -43,7 +43,7 @@ export const USER_TEMPLATE_ROWS: (string | number)[][] = [
     'Velachery',
     '',
     'Field staff, OL division',
-    '',
+    'Staff@2026',
   ],
   ['Driver', 'Ravikumar N', '9884033456', 'ravikumar@lairon.in', '', '', '', 'Driver@2026'],
   ['Manager', 'Anitha Rao', '9790011223', '', 'Anna Nagar', 'CHN', '', ''],
@@ -131,10 +131,10 @@ export function parseUsers(records: Rec[], ctx: UserCtx): { rows: UserRow[]; iss
       else warn(`HQ “${hq}” isn’t in the HQ dropdown — saved as typed`)
     }
     const password = text(r.password)
-    if (role === 'driver') {
+    if (role && usesPassword(role)) {
       if (password.length < 8)
-        err('Drivers need a Password of at least 8 characters (no email is sent)')
-    } else if (password) warn('Password is only used for drivers — ignored')
+        err('Staffs and Drivers need a Password of at least 8 characters (no email is sent)')
+    } else if (password) warn('Password is only used for Staffs and Drivers — ignored')
     const bio = text(r.bio)
     if (bio.length > 500) err('Bio is longer than 500 characters')
 

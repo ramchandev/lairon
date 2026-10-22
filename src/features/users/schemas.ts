@@ -8,6 +8,9 @@ const emailOk = (v: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)
 /** Per-role required fields (PLAN §5.1): Staff/Driver need an email; Manager's is optional. */
 export const MIN_PASSWORD = 8
 
+/** Drivers and Staffs get an admin-set password (no invite email); Super Admins get an invite; Managers use their phone. */
+export const usesPassword = (role: ManagedRole) => role === 'driver' || role === 'staff'
+
 /** `editing`: an existing user (a driver's password is then optional — fill it only to change it). */
 export const userSchema = (role: ManagedRole, editing = false) =>
   z.object({
@@ -30,7 +33,7 @@ export const userSchema = (role: ManagedRole, editing = false) =>
     password: z
       .string()
       .refine(
-        (v) => role !== 'driver' || (editing && v === '') || v.length >= MIN_PASSWORD,
+        (v) => !usesPassword(role) || (editing && v === '') || v.length >= MIN_PASSWORD,
         `Use at least ${MIN_PASSWORD} characters`,
       ),
   })
