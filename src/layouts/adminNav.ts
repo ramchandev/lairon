@@ -24,7 +24,7 @@ import {
  *
  * One deliberate change from the HTML (requested by the owner): the single "Users" link under People is replaced by separate
  * links — Drivers, Staffs, Managers, Doctors and Super Admins — each opening its own list. A second change (owner's request):
- * a "Revenue Report" link (revenue by doctor) under Overview. Everything else is as approved.
+ * a "Reports" section holding the "Revenue Report" link (revenue by doctor). Everything else is as approved.
  */
 export interface AdminNavItem {
   key: string
@@ -37,10 +37,7 @@ export interface AdminNavItem {
 export const ADMIN_NAV: { group: string; items: AdminNavItem[] }[] = [
   {
     group: 'Overview',
-    items: [
-      { key: 'dashboard', root: '', label: 'Dashboard', icon: LayoutDashboard },
-      { key: 'reports', root: 'reports', label: 'Revenue Report', icon: IndianRupee },
-    ],
+    items: [{ key: 'dashboard', root: '', label: 'Dashboard', icon: LayoutDashboard }],
   },
   {
     group: 'Operations',
@@ -61,6 +58,10 @@ export const ADMIN_NAV: { group: string; items: AdminNavItem[] }[] = [
       },
       { key: 'duties', root: 'trip-duty', label: 'Trip Duty', icon: CarFront, count: 'leave' },
     ],
+  },
+  {
+    group: 'Reports',
+    items: [{ key: 'reports', root: 'reports', label: 'Revenue Report', icon: IndianRupee }],
   },
   {
     group: 'People',

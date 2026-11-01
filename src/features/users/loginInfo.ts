@@ -10,7 +10,7 @@ export function loginInfoText(i: {
   return [
     `Hi ${first},`,
     '',
-    `Your LAIRON EZ ${i.role} account is ready. Sign in with these details:`,
+    'Your LAIRON EZ account is ready. Sign in with these details:',
     '',
     `Login URL: ${i.url}`,
     `Username: ${i.email}`,

@@ -377,14 +377,6 @@ export const router = createBrowserRouter([
                 ),
               },
               {
-                path: 'directory',
-                ...h('Staff directory'),
-                ...page(
-                  () => import('@/features/users/pages/StaffDirectoryPage'),
-                  'StaffDirectoryPage',
-                ),
-              },
-              {
                 path: 'profile',
                 ...h('Profile'),
                 ...page(() => import('@/features/auth/ProfilePage'), 'ProfilePage'),

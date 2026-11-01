@@ -82,7 +82,7 @@ export function RevenueReportPage() {
           </button>
         }
       />
-      <section aria-label="Key numbers" className="kpis">
+      <section aria-label="Key numbers" className="kpis kpis-3 mb-4">
         <div className="kpi glass">
           <span className="k-ic t-ok">
             <IndianRupee size={20} />

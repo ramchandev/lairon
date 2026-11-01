@@ -1088,6 +1088,9 @@ textarea {
     }
   }
   @media (min-width: 1280px) {
+    .kpis.kpis-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
     .kpis {
       grid-template-columns: repeat(6, 1fr);
     }

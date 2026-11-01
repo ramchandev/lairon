@@ -46,7 +46,7 @@ describe('AdminLayout', () => {
       within(side)
         .getAllByRole('heading', { level: 6, hidden: true })
         .map((h) => h.textContent),
-    ).toEqual(['Overview', 'Operations', 'People', 'Masters'])
+    ).toEqual(['Overview', 'Operations', 'Reports', 'People', 'Masters'])
     expect(
       within(side)
         .getAllByRole('link', { hidden: true })
@@ -54,10 +54,10 @@ describe('AdminLayout', () => {
     ).toEqual([
       'LLAIRON EZAdmin portal',
       'Dashboard',
-      'Revenue Report',
       'Service Requests3',
       'Starter Packs2',
       'Trip Duty1',
+      'Revenue Report',
       'Drivers',
       'Staffs',
       'Managers',

@@ -2,7 +2,6 @@ import {
   CalendarDays,
   ClipboardList,
   ClipboardPlus,
-  Contact,
   House,
   PackagePlus,
   Stethoscope,
@@ -28,6 +27,5 @@ export const STAFF_TABS = [
   { to: '/staff', label: 'Home', icon: House, end: true },
   { to: '/staff/new', label: 'New Pack', icon: PackagePlus },
   { to: '/staff/requests', label: 'Requests', icon: ClipboardList },
-  { to: '/staff/directory', label: 'Directory', icon: Contact },
   { to: '/staff/profile', label: 'Profile', icon: UserRound },
 ]

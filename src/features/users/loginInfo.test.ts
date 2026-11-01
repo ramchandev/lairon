@@ -14,9 +14,12 @@ describe('loginInfoText', () => {
     expect(t).toContain('Username: ravikumar@lairon.in\n')
     expect(t).toContain('Password: Ab3$kLm9xQ2@\n')
   })
-  it('is worded for the staff role', () => {
+  it('uses the same opening line for every role', () => {
+    const t = loginInfoText({ role: 'driver', name: 'A', url: 'u', email: 'e', password: 'p' })
+    expect(t).toContain('Your LAIRON EZ account is ready. Sign in with these details:')
+  })
+  it('points staff to New Pack', () => {
     const t = loginInfoText({ role: 'staff', name: 'Karthik', url: 'u', email: 'e', password: 'p' })
-    expect(t).toContain('staff account')
     expect(t).toContain('New Pack')
   })
   it('copes with a missing name', () => {
