@@ -77,7 +77,7 @@ describe('users import', () => {
     expect(errs(rows[5])[0]).toMatch(/Super Admins can’t be imported/)
     expect(errs(rows[6])[0]).toMatch(/Unknown role/)
   })
-  it('staffs and drivers need a Password of 8+ characters; other roles ignore it with a warning', () => {
+  it('staffs, drivers and managers need a Password of 8+ characters', () => {
     const head = ['Role', 'Full Name', 'Phone', 'Email', 'Password']
     const rows = parseUsers(
       sheet(USER_FIELDS, [
@@ -85,7 +85,6 @@ describe('users import', () => {
         ['Driver', 'A', '9840122345', 'a@x.in', ''],
         ['Driver', 'B', '9840122346', 'b@x.in', 'short'],
         ['Driver', 'C', '9840122347', 'c@x.in', 'Driver@2026'],
-        ['Manager', 'D', '9840122348', '', 'whatever123'],
       ]).records,
       ctx,
     ).rows
@@ -93,11 +92,9 @@ describe('users import', () => {
     expect(errs(rows[1])[0]).toMatch(/Password of at least 8/)
     expect(errs(rows[2])).toEqual([])
     expect(rows[2].password).toBe('Driver@2026')
-    expect(errs(rows[3])).toEqual([])
-    expect(rows[3].issues[0].severity).toBe('warning')
   })
-  it('a Manager needs no email; an unknown HQ is only a warning', () => {
-    const [m] = run([['Manager', 'Anitha', '9790011223', '', 'XYZ']])
+  it('a Manager is like Staff (email + password); an unknown HQ is only a warning', () => {
+    const [m] = run([['Manager', 'Anitha', '9790011223', 'an@x.in', 'XYZ', 'Manager@2026']])
     expect(errs(m)).toEqual([])
     expect(m.issues.map((i) => i.severity)).toEqual(['warning'])
   })
@@ -192,7 +189,7 @@ describe('service request import', () => {
       line({ 'Request No': 'sr-2609-0001' }),
     )
     expect(errs(rows[0])[0]).toMatch(/Manager “Nobody” not found/)
-    expect(errs(rows[1])[0]).toMatch(/Staff “Nobody” not found/)
+    expect(errs(rows[1])[0]).toMatch(/Accountability “Nobody” not found/)
     expect(errs(rows[2])[0]).toMatch(/needs an Admin Note/)
     expect(errs(rows[3])[0]).toMatch(/Offer %/)
     expect(errs(rows[4])[0]).toMatch(/Netrate amount is required/)

@@ -99,11 +99,12 @@ describe('driver and doctor’s-manager apps match the approved HTML', () => {
     )
   })
   it('manager bottom bar: same tabs, order and icons', () => {
+    // Deliberate change: "My Doctors" is now "Doctors" (managers see every doctor, not just their own).
     expect(MANAGER_TABS.map((t) => [t.label, t.icon.displayName])).toEqual(
-      manager.map((t) => [t.label, pascal(t.icon)]),
+      manager.map((t) => [t.label === 'My Doctors' ? 'Doctors' : t.label, pascal(t.icon)]),
     )
   })
-  it('role labels under the brand are worded exactly as in the HTML', () => {
+  it('role labels under the brand: Driver as in the HTML; "Manager" replaces "Doctor\'s Manager" (owner: managers are LAIRON people)', () => {
     expect(html).toContain(`app === 'driver' ? 'Driver' : "Doctor's Manager"`)
   })
 })

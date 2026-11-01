@@ -18,7 +18,7 @@ const ROLE_LABEL = {
   admin: 'Super Admin',
   staff: 'Staff',
   driver: 'Driver',
-  manager: 'Doctor’s Manager',
+  manager: 'Manager',
 } as const
 
 /** Shared by every role. Role, status and phone are read-only (enforced by a DB trigger too). */
@@ -118,7 +118,7 @@ export function ProfilePage() {
           <li>
             <Phone size={20} aria-hidden />
             <div>
-              <span className="k">{profile.role === 'manager' ? 'Phone (sign-in)' : 'Phone'}</span>
+              <span className="k">Phone</span>
               <span className="mono">{formatPhone(profile.phone)}</span>
             </div>
           </li>

@@ -79,7 +79,7 @@ export function MorePage() {
       key: 'managers',
       root: 'managers',
       label: 'Managers',
-      sub: `${c?.roles.manager ?? '…'} doctor’s managers`,
+      sub: `${c?.roles.manager ?? '…'} managers`,
       tone: 'violet',
     },
     {
@@ -121,7 +121,7 @@ export function MorePage() {
       key: 'dropdowns',
       root: 'dropdowns',
       label: 'Dropdowns',
-      sub: 'Form options & mapping',
+      sub: 'Form options',
       tone: 'danger',
     },
   ]

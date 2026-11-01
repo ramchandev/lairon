@@ -72,8 +72,8 @@ describe('preflight: bundle scan', () => {
 })
 
 describe('preflight: Edge Function auth config', () => {
-  const GOOD = `[auth]\nenable_signup = false\n[functions.manager-phone-login]\nverify_jwt = false\n[functions.notify]\nverify_jwt = false\n[functions.send-email]\nverify_jwt = true\n`
-  it('accepts exactly the two public functions', () =>
+  const GOOD = `[auth]\nenable_signup = false\n[functions.notify]\nverify_jwt = false\n[functions.send-email]\nverify_jwt = true\n`
+  it('accepts exactly the one public function (notify)', () =>
     expect(checkFunctionsConfig(GOOD)).toEqual([]))
   it('rejects an extra public function, a missing public flag and open sign-up', () => {
     expect(

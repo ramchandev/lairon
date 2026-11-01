@@ -1,8 +1,8 @@
 // Admin creates a user: auth user + profile (+ invite email for admin).
-// DRIVERS and STAFF are created with a password the admin sets (no email is sent); managers sign in by phone.
+// STAFF, DRIVERS and MANAGERS are created with a password the admin sets (no email is sent).
 import { admin, requireAdmin } from '../_shared/clients.ts'
 import { corsHeaders, json } from '../_shared/cors.ts'
-import { managerEmail, normalizePhone } from '../_shared/phone.ts'
+import { normalizePhone } from '../_shared/phone.ts'
 import { deps } from '../_shared/email/deps.ts'
 import { deliver } from '../_shared/email/send.ts'
 
@@ -24,13 +24,13 @@ Deno.serve(async (req) => {
   const phone = normalizePhone(b.phone)
   const email = text(b.email)?.toLowerCase() ?? null
   const password = typeof b.password === 'string' ? b.password : null
-  const withPassword = role === 'driver' || role === 'staff'
+  const withPassword = role !== 'admin'
   if (withPassword && (!password || password.length < 8)) {
     return json(req, { error: `Set a password of at least 8 characters for the ${role}` }, 400)
   }
   if (!fullName) return json(req, { error: 'Name is required' }, 400)
   if (!phone) return json(req, { error: 'Enter a valid 10-digit mobile number' }, 400)
-  if (role !== 'manager' && (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))) {
+  if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     return json(req, { error: 'A valid email is required' }, 400)
   }
 
@@ -41,18 +41,8 @@ Deno.serve(async (req) => {
   let userId: string
   let actionLink: string | null = null
 
-  if (role === 'manager') {
-    // Phone-only managers get a synthetic email; no password, no invite.
-    const { data, error } = await admin.auth.admin.createUser({
-      email: managerEmail(phone),
-      email_confirm: true,
-      user_metadata: { full_name: fullName },
-    })
-    if (error || !data.user)
-      return json(req, { error: error?.message ?? 'Could not create user' }, 400)
-    userId = data.user.id
-  } else if (withPassword) {
-    // Driver / staff: the admin sets the password, the account is active immediately, nothing is emailed.
+  if (withPassword) {
+    // Staff / driver / manager: the admin sets the password, the account is active immediately, nothing is emailed.
     const { data, error } = await admin.auth.admin.createUser({
       email: email!,
       password: password!,

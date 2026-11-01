@@ -58,6 +58,52 @@ export const useDoctor = (id?: string) =>
 
 const nul = (s: string) => s.trim() || null
 
+/** Another doctor already has this phone number (the database refuses duplicates). */
+export class DuplicatePhoneError extends Error {
+  constructor() {
+    super('A doctor with this phone number already exists')
+  }
+}
+
+export interface DoctorMatch {
+  id: string
+  name: string
+  area: string | null
+  hospital_name: string | null
+  manager_name: string | null
+}
+
+/** The doctor that already uses this phone number (any manager's), or null. `exceptId`: the doctor being edited. */
+export async function findDoctorByPhone(
+  phone: string,
+  exceptId?: string,
+): Promise<DoctorMatch | null> {
+  const e164 = normalizePhone(phone)
+  if (!e164) return null
+  let q = supabase
+    .from('doctors')
+    .select('id, name, area, hospital_name, manager:manager_id(full_name)')
+    .eq('phone', e164)
+  if (exceptId) q = q.neq('id', exceptId)
+  const { data, error } = await q.limit(1).maybeSingle()
+  if (error || !data) return null
+  const r = data as unknown as {
+    id: string
+    name: string
+    area: string | null
+    hospital_name: string | null
+    manager: { full_name: string } | { full_name: string }[] | null
+  }
+  const m = Array.isArray(r.manager) ? r.manager[0] : r.manager
+  return {
+    id: r.id,
+    name: r.name,
+    area: r.area,
+    hospital_name: r.hospital_name,
+    manager_name: m?.full_name ?? null,
+  }
+}
+
 export function useSaveDoctor(id?: string) {
   const qc = useQueryClient()
   return useMutation({
@@ -80,7 +126,7 @@ export function useSaveDoctor(id?: string) {
       const { error } = await (id
         ? supabase.from('doctors').update(row).eq('id', id)
         : supabase.from('doctors').insert(row))
-      if (error) throw new Error(error.message)
+      if (error) throw error.code === '23505' ? new DuplicatePhoneError() : new Error(error.message)
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
   })

@@ -21,16 +21,16 @@ declare d1 uuid;
 begin
   -- manager adds a doctor for themselves
   perform pg_temp.as_user('00000000-0000-0000-0000-0000000000c1');
-  insert into doctors (manager_id, name, speciality) values (auth.uid(), 'Dr One', 'Cardiologist') returning id into d1;
-  perform pg_temp.expect_error($q$insert into doctors (manager_id, name) values ('00000000-0000-0000-0000-0000000000c2', 'Sneaky')$q$, 'cannot create for another manager');
-  perform pg_temp.expect_error($q$insert into doctors (manager_id, name) values ('00000000-0000-0000-0000-0000000000b1', 'Wrong role')$q$, 'doctor must belong to a manager-role profile');
+  insert into doctors (manager_id, name, speciality, phone) values (auth.uid(), 'Dr One', 'Cardiologist', '+919111111101') returning id into d1;
+  perform pg_temp.expect_error($q$insert into doctors (manager_id, name, phone) values ('00000000-0000-0000-0000-0000000000c2', 'Sneaky', '+919111111103')$q$, 'cannot create for another manager');
+  perform pg_temp.expect_error($q$insert into doctors (manager_id, name, phone) values ('00000000-0000-0000-0000-0000000000b1', 'Wrong role', '+919111111104')$q$, 'doctor must belong to a manager-role profile');
   perform pg_temp.expect_error($q$update doctors set manager_id = '00000000-0000-0000-0000-0000000000c2'$q$, 'manager cannot hand a doctor to someone else');
   update doctors set hospital_name = 'Apollo' where id = d1;   -- normal edit works
   reset role;
 
-  -- other manager cannot see, edit or delete it
+  -- other manager can read it but cannot edit or delete it
   perform pg_temp.as_user('00000000-0000-0000-0000-0000000000c2');
-  perform pg_temp.assert_eq((select count(*)::int from doctors), 0, 'other manager sees nothing');
+  perform pg_temp.assert_eq((select count(*)::int from doctors), 1, 'other manager can see it (read-only)');
   update doctors set name = 'Hacked' where id = d1;
   delete from doctors where id = d1;
   reset role;
@@ -39,7 +39,7 @@ begin
   -- staff can read (starter-pack search) but not write
   perform pg_temp.as_user('00000000-0000-0000-0000-0000000000b1');
   perform pg_temp.assert_eq((select count(*)::int from doctors), 1, 'staff can read doctors');
-  perform pg_temp.expect_error($q$insert into doctors (manager_id, name) values ('00000000-0000-0000-0000-0000000000c1', 'x')$q$, 'staff cannot create');
+  perform pg_temp.expect_error($q$insert into doctors (manager_id, name, phone) values ('00000000-0000-0000-0000-0000000000c1', 'x', '+919111111105')$q$, 'staff cannot create');
   update doctors set name = 'Hacked';
   reset role;
   perform pg_temp.assert_eq((select name from doctors where id = d1), 'Dr One', 'staff could not edit');
@@ -50,7 +50,10 @@ begin
   reset role;
   perform pg_temp.assert_eq((select manager_id from doctors where id = d1), '00000000-0000-0000-0000-0000000000c2'::uuid, 'admin reassigned');
   perform pg_temp.as_user('00000000-0000-0000-0000-0000000000c1');
-  perform pg_temp.assert_eq((select count(*)::int from doctors), 0, 'previous manager loses access after reassign');
+  update doctors set name = 'Hacked again' where id = d1;
+  reset role;
+  perform pg_temp.assert_eq((select name from doctors where id = d1), 'Dr One', 'previous manager can no longer edit after reassign');
+  perform pg_temp.as_user('00000000-0000-0000-0000-0000000000c1');
   reset role;
 
   -- deleting a manager keeps the doctor (set null) so admin can reassign

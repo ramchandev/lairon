@@ -4,7 +4,7 @@ import { inputCls } from '@/components/form-styles'
 import { useUsers } from '@/features/users/api'
 import type { Doctor } from '../api'
 
-/** Small action modal (not an add/edit form): pick a new Doctor's Manager. */
+/** Small action modal (not an add/edit form): pick a new Manager. */
 export function ReassignDialog({
   doctor,
   busy,
@@ -39,7 +39,7 @@ export function ReassignDialog({
             Currently with <b>{doctor.manager_name ?? 'nobody'}</b>. Past requests are unaffected.
           </p>
           <label className="mt-3 block text-sm font-semibold">
-            New Doctor’s Manager
+            New Manager
             <select
               className={`${inputCls} mt-1`}
               value={id}

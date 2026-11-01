@@ -2,7 +2,6 @@ import { Field } from '@/components/FormPage'
 import { SearchSelect } from '@/components/SearchSelect'
 import {
   divisionOptions,
-  isFiltered,
   qualificationOptions,
   specialityOptions,
   useCascadeData,
@@ -18,8 +17,7 @@ const opt = (v: string) => ({ value: v, label: v })
 
 /**
  * Renders its fields straight into the parent Section's grid.
- * Division → Qualification → Speciality, narrowed by the admin's mapping (PLAN §6.7).
- * Changing Division clears Qualification and Speciality; changing Qualification clears Speciality.
+ * Division, Qualification and Speciality are independent searchable lists (no mapping): any doctor can be in any division.
  * Values are plain text snapshots; Qualification and Speciality always allow "Others".
  */
 export function ProfessionalFields({
@@ -39,10 +37,6 @@ export function ProfessionalFields({
         aria-busy="true"
       />
     )
-  const note = isFiltered(data, value.division)
-    ? `Filtered by the ${value.division} division mapping`
-    : undefined
-
   return (
     <>
       <Field label="Division" error={errors?.division}>
@@ -51,7 +45,7 @@ export function ProfessionalFields({
           placeholder="Select division"
           value={value.division}
           options={divisionOptions(data).map(opt)}
-          onChange={(division) => onChange({ division, qualification: '', speciality: '' })}
+          onChange={(division) => onChange({ ...value, division })}
         />
       </Field>
       <Field label="Qualification" error={errors?.qualification}>
@@ -59,10 +53,9 @@ export function ProfessionalFields({
           title="Qualification"
           placeholder="Select qualification"
           allowOther
-          note={note}
           value={value.qualification}
-          options={qualificationOptions(data, value.division).map(opt)}
-          onChange={(qualification) => onChange({ ...value, qualification, speciality: '' })}
+          options={qualificationOptions(data).map(opt)}
+          onChange={(qualification) => onChange({ ...value, qualification })}
         />
       </Field>
       <Field label="Speciality" full error={errors?.speciality}>
@@ -70,9 +63,8 @@ export function ProfessionalFields({
           title="Speciality"
           placeholder="Select speciality"
           allowOther
-          note={note}
           value={value.speciality}
-          options={specialityOptions(data, value.division, value.qualification).map(opt)}
+          options={specialityOptions(data).map(opt)}
           onChange={(speciality) => onChange({ ...value, speciality })}
         />
       </Field>

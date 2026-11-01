@@ -16,21 +16,13 @@ export interface LookupItem {
   sort_order: number
   is_active: boolean
 }
-export interface MapPair {
-  id: string
-  division_id: string
-  qualification_item_id: string
-  speciality_item_id: string
-}
 
 const LISTS = ['lookup-lists']
 const ITEMS = ['lookup-items-all']
-const MAP = ['lookup-map']
 
 function refresh(qc: QueryClient) {
   qc.invalidateQueries({ queryKey: LISTS })
   qc.invalidateQueries({ queryKey: ITEMS })
-  qc.invalidateQueries({ queryKey: MAP })
   qc.invalidateQueries({ queryKey: ['lookup'] }) // useLookup() caches used by forms
 }
 
@@ -164,72 +156,6 @@ export function useReorderItems() {
       )
       const failed = results.find((r) => r.error)
       if (failed?.error) throw failed.error
-    },
-    onSuccess: () => refresh(qc),
-  })
-}
-
-// ── Division ↔ qualification ↔ speciality mapping ──
-export const useMapPairs = (divisionId: string | null) =>
-  useQuery({
-    queryKey: [...MAP, divisionId],
-    enabled: !!divisionId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('division_qual_spec_map')
-        .select('*')
-        .eq('division_id', divisionId!)
-      if (error) throw error
-      return data as MapPair[]
-    },
-  })
-
-export function useAddPair() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (v: {
-      division_id: string
-      qualification_item_id: string
-      speciality_item_id: string
-    }) => {
-      const { error } = await supabase.from('division_qual_spec_map').insert(v)
-      if (error) throw dup(error, 'This pair')
-    },
-    onSuccess: () => refresh(qc),
-  })
-}
-
-export function useRemovePair() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from('division_qual_spec_map').delete().eq('id', id)
-      if (error) throw error
-    },
-    onSuccess: () => refresh(qc),
-  })
-}
-
-/** Adds every pair of `from` to `to` (existing pairs are kept). */
-export function useCopyMapping() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ from, to }: { from: string; to: string }) => {
-      const { data, error } = await supabase
-        .from('division_qual_spec_map')
-        .select('qualification_item_id, speciality_item_id')
-        .eq('division_id', from)
-      if (error) throw error
-      if (!data.length) return 0
-      const { error: e2 } = await supabase.from('division_qual_spec_map').upsert(
-        data.map((r) => ({ ...r, division_id: to })),
-        {
-          onConflict: 'division_id,qualification_item_id,speciality_item_id',
-          ignoreDuplicates: true,
-        },
-      )
-      if (e2) throw e2
-      return data.length
     },
     onSuccess: () => refresh(qc),
   })

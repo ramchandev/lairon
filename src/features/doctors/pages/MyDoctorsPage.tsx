@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Building2, ClipboardPlus, Inbox, MapPin, Pencil, Phone, UserPlus } from 'lucide-react'
+import { useAuth } from '@/app/AuthProvider'
 import { Avatar } from '@/components/Avatar'
 import { EmptyState } from '@/components/EmptyState'
 import { ChipFilter, SearchInput } from '@/components/ListControls'
@@ -9,9 +10,11 @@ import { StatusBadge } from '@/components/StatusBadge'
 import { CallLink } from '@/features/users/components'
 import { useDoctors } from '../api'
 
-/** Manager home: their doctors as cards. RLS guarantees only their own appear. */
+/** Manager home: every doctor in the directory as cards (managers see all; they edit only the ones they added). */
 export function MyDoctorsPage() {
+  const { profile } = useAuth()
   const { data, isLoading } = useDoctors()
+  const [scope, setScope] = useState<'all' | 'mine'>('all')
   const [q, setQ] = useState('')
   const [status, setStatus] = useState<'active' | 'inactive' | 'all'>('active')
 
@@ -19,11 +22,12 @@ export function MyDoctorsPage() {
     () =>
       (data ?? []).filter((d) => {
         if (status !== 'all' && d.is_active !== (status === 'active')) return false
-        return `${d.name} ${d.speciality ?? ''} ${d.qualification ?? ''} ${d.hospital_name ?? ''} ${d.area ?? ''}`
+        if (scope === 'mine' && d.manager_id !== profile?.id) return false
+        return `${d.name} ${d.phone ?? ''} ${d.speciality ?? ''} ${d.qualification ?? ''} ${d.hospital_name ?? ''} ${d.area ?? ''}`
           .toLowerCase()
           .includes(q.trim().toLowerCase())
       }),
-    [data, q, status],
+    [data, q, status, scope, profile?.id],
   )
   const n = data?.length ?? 0
 
@@ -31,7 +35,7 @@ export function MyDoctorsPage() {
     <div>
       <div className="page-h">
         <div>
-          <h1>My Doctors</h1>
+          <h1>Doctors</h1>
           <p className="muted">
             {n} doctor{n === 1 ? '' : 's'}
           </p>
@@ -42,7 +46,19 @@ export function MyDoctorsPage() {
       </div>
       {n > 0 && (
         <div className="toolbar">
-          <SearchInput value={q} onChange={setQ} placeholder="Search name, hospital, area…" />
+          <SearchInput
+            value={q}
+            onChange={setQ}
+            placeholder="Search name, phone, hospital, area…"
+          />
+          <ChipFilter
+            value={scope}
+            onChange={setScope}
+            options={[
+              { key: 'all', label: 'All doctors' },
+              { key: 'mine', label: 'Added by me' },
+            ]}
+          />
           <ChipFilter
             value={status}
             onChange={setStatus}
@@ -119,9 +135,11 @@ export function MyDoctorsPage() {
               <Link to={`/m/request/add?doctor=${d.id}`} className="btn btn-primary btn-sm">
                 <ClipboardPlus aria-hidden /> Request service
               </Link>
-              <Link to={`/m/doctors/${d.id}/edit`} className="btn btn-ghost btn-sm">
-                <Pencil aria-hidden /> Edit
-              </Link>
+              {d.manager_id === profile?.id && (
+                <Link to={`/m/doctors/${d.id}/edit`} className="btn btn-ghost btn-sm">
+                  <Pencil aria-hidden /> Edit
+                </Link>
+              )}
             </div>
           </section>
         ))

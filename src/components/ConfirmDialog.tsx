@@ -7,6 +7,8 @@ interface Props {
   title: string
   description?: ReactNode
   confirmLabel?: string
+  /** Text of the dismiss button (default "Cancel"; use "No" for yes/no questions). */
+  cancelLabel?: string
   tone?: 'danger' | 'primary'
   /** Show a required reason box (reject / cancel / reopen). The reason is passed to onConfirm. */
   reasonLabel?: string
@@ -26,6 +28,7 @@ function DialogBody({
   title,
   description,
   confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
   tone = 'danger',
   reasonLabel,
   busy,
@@ -80,7 +83,7 @@ function DialogBody({
               onClick={onCancel}
               className="min-h-11 rounded-control border border-line-2 bg-white/70 px-4 font-semibold"
             >
-              Cancel
+              {cancelLabel}
             </button>
             <button
               type="button"

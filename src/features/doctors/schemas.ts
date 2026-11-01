@@ -3,9 +3,11 @@ import { normalizePhone } from '@/lib/phone'
 
 export const doctorSchema = z.object({
   name: z.string().trim().min(1, 'Doctor name is required'),
+  // Mandatory: the phone number is how duplicate doctors are caught.
   phone: z
     .string()
     .trim()
+    .min(1, 'Phone number is required')
     .refine((v) => v === '' || normalizePhone(v) !== null, 'Enter a valid 10-digit mobile number'),
   email: z
     .string()

@@ -64,12 +64,6 @@ export interface FnExpect {
 }
 /** Calls that are harmless without credentials: each is rejected before any side effect. */
 export const FUNCTIONS: FnExpect[] = [
-  {
-    name: 'manager-phone-login',
-    body: '{}',
-    expect: 400,
-    why: 'rejects a missing phone number (public by design, rate-limited)',
-  },
   { name: 'notify', body: '{}', expect: 401, why: 'rejects calls without the webhook secret' },
   {
     name: 'admin-create-user',

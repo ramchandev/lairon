@@ -1,13 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { ChevronDown, ListChecks, Network, Plus } from 'lucide-react'
+import { ChevronDown, ListChecks, Plus } from 'lucide-react'
 import { PageHeader } from '@/components/FormPage'
 import { cn } from '@/lib/utils'
 import { ItemsPanel } from '../components/ItemsPanel'
-import { MappingPanel } from '../components/MappingPanel'
 import { useAllLookupItems, useLookupLists } from '../api'
-
-const MAPPING = '__mapping'
 
 /** Vertical tabs. ≥900px: sticky 270px column. Mobile: collapses into one "Dropdown list: X · Change" button. */
 export function DropdownsPage() {
@@ -19,9 +16,9 @@ export function DropdownsPage() {
 
   if (lists.isLoading || items.isLoading) return <p className="text-muted">Loading…</p>
   const all = lists.data ?? []
-  const selected = params.get('list') ?? all[0]?.key ?? MAPPING
+  const selected = params.get('list') ?? all[0]?.key ?? ''
   const list = all.find((l) => l.key === selected)
-  const currentLabel = selected === MAPPING ? 'Qualification mapping' : (list?.label ?? '—')
+  const currentLabel = list?.label ?? '—'
 
   const select = (key: string) => {
     setParams({ list: key })
@@ -71,8 +68,6 @@ export function DropdownsPage() {
           </button>
           <h6>Lists</h6>
           {all.map((l) => tab(l.key, l.label, ListChecks, count(l.key)))}
-          <h6>Mappings</h6>
-          {tab(MAPPING, 'Qualification mapping', Network)}
           <Link to="/admin/dropdowns/new-list" className="vtab vtab-add">
             <Plus aria-hidden />
             <span className="vt-l">New dropdown list</span>
@@ -80,9 +75,7 @@ export function DropdownsPage() {
         </nav>
 
         <div className="dd-panel">
-          {selected === MAPPING ? (
-            <MappingPanel />
-          ) : list ? (
+          {list ? (
             <ItemsPanel
               key={list.key}
               list={list}

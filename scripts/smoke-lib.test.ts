@@ -36,7 +36,6 @@ describe('smoke: functions and rpc', () => {
   const fn = (n: string) => FUNCTIONS.find((f) => f.name === n)!
   it('expected rejections mean deployed and protected', () => {
     expect(classifyFunction(fn('notify'), 401).verdict).toBe('ok')
-    expect(classifyFunction(fn('manager-phone-login'), 400).verdict).toBe('ok')
     expect(classifyFunction(fn('admin-create-user'), 401).verdict).toBe('ok')
   })
   it('404 = not deployed; a 2xx without credentials is an open door', () => {
@@ -62,7 +61,6 @@ describe('smoke: full run', () => {
       if (url.includes('/auth/v1/settings')) return reply(200, '{"disable_signup":true}')
       if (url.includes('/rest/v1/rpc/')) return reply(401, '{"message":"permission denied"}')
       if (url.includes('/rest/v1/')) return reply(200, '[]')
-      if (url.includes('/functions/v1/manager-phone-login')) return reply(400)
       return reply(401)
     })
     expect(res.filter((r) => r.verdict !== 'ok')).toEqual([])

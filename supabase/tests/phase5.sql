@@ -31,7 +31,7 @@ begin
   insert into service_requests (batch_id, doctor_name, area, hospital_name, hq, division, qualification, speciality, service_amount,
     service_type, expected_business_value, current_business_value, offer_type, offer_percent)
   values (b, 'Dr X', 'Adyar', 'Apollo', 'CHN', 'OL', 'MD', 'Cardiologist', 5000, 'Camp', 100000, 50000, 'Offer', 10);
-  perform pg_temp.expect_error(format('select submit_service_batch(%L)', b), 'no accountability staff');
+  perform pg_temp.assert_eq((select accountability_staff_name from service_request_batches where id = b), 'Mgr One', 'the manager is accountable by default');
   update service_request_batches set accountability_staff_id = '00000000-0000-0000-0000-0000000000b1' where id = b;
   perform pg_temp.assert_eq((select accountability_staff_name from service_request_batches where id = b), 'Staff One', 'staff name snapshot');
 

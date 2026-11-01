@@ -5,7 +5,7 @@ import { SearchInput } from '@/components/ListControls'
 import { useUsers } from '../api'
 import { Avatar, CallLink, visibleEmail } from '../components'
 
-/** Read-only, searchable by name or area. Staff and Doctor's Managers see active staff only (enforced by RLS). */
+/** Read-only, searchable by name or area. Staff and Managers see active staff only (enforced by RLS). */
 export function StaffDirectoryPage() {
   const { data, isLoading } = useUsers('staff')
   const [q, setQ] = useState('')

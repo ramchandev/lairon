@@ -20,7 +20,7 @@ export const SR_FIELDS: FieldSpec[] = [
   },
   {
     key: 'manager',
-    label: "Doctor's Manager",
+    label: 'Manager',
     aliases: ['manager', 'managername', 'doctormanager', 'managerphone'],
   },
   {
@@ -177,12 +177,12 @@ export function parseRequests(records: Rec[], ctx: SrCtx): { rows: SrRow[]; issu
     const warn = (message: string) => issues.push({ severity: 'warning', line, message })
 
     const manager = matchPerson(text(r.manager), ctx.managers, normalizePhone)
-    if (!text(r.manager)) err('Doctor’s Manager is missing')
-    else if (!manager)
-      err(`Doctor’s Manager “${text(r.manager)}” not found (use the exact name or phone)`)
+    if (!text(r.manager)) err('Manager is missing')
+    else if (!manager) err(`Manager “${text(r.manager)}” not found (use the exact name or phone)`)
     const staff = matchPerson(text(r.staff), ctx.staff, normalizePhone)
-    if (!text(r.staff)) err('Accountability staff is missing')
-    else if (!staff) err(`Staff “${text(r.staff)}” not found (use the exact name or phone)`)
+    // Accountability is optional: blank = the manager themself.
+    if (text(r.staff) && !staff)
+      err(`Accountability “${text(r.staff)}” not found (use the exact name or phone)`)
 
     const statusText = text(r.status)
     const status = statusText ? STATUS_WORDS[norm(statusText)] : 'submitted'
@@ -255,9 +255,11 @@ export function parseRequests(records: Rec[], ctx: SrCtx): { rows: SrRow[]; issu
       ref_no ||
       [norm(text(r.manager)), norm(text(r.staff)), status ?? '', submitted_on ?? ''].join('|')
 
-    const doc = manager
-      ? ctx.doctors.find((d) => d.manager_id === manager.id && norm(d.name) === norm(doctor_name))
-      : undefined
+    // Any manager can use any doctor: prefer the manager's own match, else a unique name match.
+    const byName = ctx.doctors.filter((d) => norm(d.name) === norm(doctor_name))
+    const doc =
+      byName.find((d) => manager && d.manager_id === manager.id) ??
+      (byName.length === 1 ? byName[0] : undefined)
     const row: SrRow = {
       line,
       issues,

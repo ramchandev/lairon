@@ -8,8 +8,8 @@ const emailOk = (v: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)
 /** Per-role required fields (PLAN §5.1): Staff/Driver need an email; Manager's is optional. */
 export const MIN_PASSWORD = 8
 
-/** Drivers and Staffs get an admin-set password (no invite email); Super Admins get an invite; Managers use their phone. */
-export const usesPassword = (role: ManagedRole) => role === 'driver' || role === 'staff'
+/** Staffs, Drivers and Managers get an admin-set password (no invite email); Super Admins get an email invite. */
+export const usesPassword = (role: ManagedRole) => role !== 'admin'
 
 /** `editing`: an existing user (a driver's password is then optional — fill it only to change it). */
 export const userSchema = (role: ManagedRole, editing = false) =>
@@ -19,13 +19,7 @@ export const userSchema = (role: ManagedRole, editing = false) =>
       .string()
       .trim()
       .refine((v) => normalizePhone(v) !== null, 'Enter a valid 10-digit mobile number'),
-    email: z
-      .string()
-      .trim()
-      .refine(
-        (v) => (role === 'manager' ? v === '' || emailOk(v) : emailOk(v)),
-        role === 'manager' ? 'Enter a valid email or leave it blank' : 'A valid email is required',
-      ),
+    email: z.string().trim().refine(emailOk, 'A valid email is required'),
     area: z.string().trim(),
     hq: z.string().trim(),
     bio: z.string().trim().max(500, 'Keep it under 500 characters'),
@@ -45,7 +39,7 @@ export const ROLE_META: Record<
 > = {
   staff: { label: 'Staff', plural: 'Staffs', hasArea: true, hasBio: true },
   driver: { label: 'Driver', plural: 'Drivers', hasArea: false, hasBio: true },
-  manager: { label: 'Doctor’s Manager', plural: 'Doctor’s Managers', hasArea: true, hasBio: false },
+  manager: { label: 'Manager', plural: 'Managers', hasArea: true, hasBio: true },
   admin: { label: 'Super Admin', plural: 'Super Admins', hasArea: false, hasBio: false },
 }
 

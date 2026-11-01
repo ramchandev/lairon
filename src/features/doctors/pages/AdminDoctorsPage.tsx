@@ -102,7 +102,7 @@ export function AdminDoctorsPage() {
     <>
       <PageHeader
         title="Doctors"
-        subtitle="Managed by doctor’s managers"
+        subtitle="Managed by managers"
         action={
           <div className="flex gap-2">
             <button className="btn btn-ghost" onClick={exportCsv} disabled={rows.length === 0}>
@@ -150,7 +150,7 @@ export function AdminDoctorsPage() {
             hint={
               q
                 ? `Nothing matches “${q}”. Try a different search.`
-                : 'Doctors are added by their Doctor’s Manager, or by you.'
+                : 'Doctors are added by their Manager, or by you.'
             }
           />
         }

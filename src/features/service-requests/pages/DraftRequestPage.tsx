@@ -3,30 +3,27 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ClipboardPlus, Pencil, Plus, Send, Trash2 } from 'lucide-react'
 import { EmptyState } from '@/components/EmptyState'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
-import { Field } from '@/components/FormPage'
-import { SearchSelect } from '@/components/SearchSelect'
+import { Avatar } from '@/components/Avatar'
+import { useAuth } from '@/app/AuthProvider'
 import { useToast } from '@/components/Toast'
-import { useUsers } from '@/features/users/api'
 import { inr } from '@/lib/format'
 import {
   batchTotal,
   useDeleteService,
   useDraftBatch,
   useEnsureDraft,
-  useSetAccountability,
   useSubmitBatch,
   type Service,
 } from '../api'
 import { ServiceCard } from '../components/ServiceCard'
 
-/** Manager's open draft: pick accountability staff once, add services, then submit them together. */
+/** Manager's open draft: add services, then submit them together (the manager is the accountable person). */
 export function DraftRequestPage() {
   const navigate = useNavigate()
   const toast = useToast()
   const draft = useDraftBatch()
   const ensure = useEnsureDraft()
-  const staff = useUsers('staff')
-  const setStaff = useSetAccountability()
+  const { profile } = useAuth()
   const remove = useDeleteService()
   const submit = useSubmitBatch()
   const [toRemove, setToRemove] = useState<Service | null>(null)
@@ -50,10 +47,7 @@ export function DraftRequestPage() {
       </div>
     )
 
-  const canSubmit = b.services.length > 0 && !!b.accountability_staff_id
-  const staffOptions = (staff.data ?? [])
-    .filter((s) => s.is_active)
-    .map((s) => ({ value: s.id, label: s.area ? `${s.full_name} · ${s.area}` : s.full_name }))
+  const canSubmit = b.services.length > 0
 
   return (
     <div>
@@ -64,25 +58,13 @@ export function DraftRequestPage() {
         </div>
       </div>
 
-      <section className="glass card">
-        <Field
-          label="Accountability (staff)"
-          required
-          hint="This staff member gets a copy of the request email."
-        >
-          <SearchSelect
-            title="Accountability staff"
-            placeholder="Select staff"
-            value={b.accountability_staff_id ?? ''}
-            options={staffOptions}
-            onChange={(staffId) =>
-              setStaff.mutate(
-                { batchId: b.id, staffId },
-                { onError: () => toast('Could not save the staff', 'error') },
-              )
-            }
-          />
-        </Field>
+      <section className="glass notice" aria-label="Raised by">
+        <Avatar name={profile?.full_name ?? 'Me'} url={profile?.avatar_url} />
+        <div className="min-w-0 flex-1">
+          <p className="muted text-[13px]">Raised by · accountable</p>
+          <b className="block truncate">{profile?.full_name}</b>
+          {profile?.area && <span className="muted text-[13px]">{profile.area}</span>}
+        </div>
       </section>
 
       <div className="mx-0.5 mt-5 mb-2.5 flex items-center justify-between">
@@ -146,9 +128,7 @@ export function DraftRequestPage() {
             <Send aria-hidden /> Submit service request
           </button>
           <p className="muted mt-2.5 text-center text-[13px]">
-            {canSubmit
-              ? 'Your draft is saved. You can come back to it any time.'
-              : 'Choose the accountability staff to submit.'}
+            Your draft is saved. You can come back to it any time.
           </p>
         </section>
       )}

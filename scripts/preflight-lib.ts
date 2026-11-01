@@ -83,7 +83,7 @@ export function scanBundle(files: { path: string; text: string }[]): Issue[] {
 }
 
 /** Only these Edge Functions may skip Supabase's JWT check; each guards itself another way. */
-export const PUBLIC_FUNCTIONS = ['manager-phone-login', 'notify']
+export const PUBLIC_FUNCTIONS = ['notify']
 
 export function checkFunctionsConfig(toml: string): Issue[] {
   const issues: Issue[] = []

@@ -46,7 +46,15 @@ export function UserFormPage() {
     bio: u?.bio ?? '',
     password: '',
   }
-  return <Inner id={id} role={role} defaults={defaults} avatarUrl={u?.avatar_url ?? null} />
+  return (
+    <Inner
+      id={id}
+      role={role}
+      defaults={defaults}
+      avatarUrl={u?.avatar_url ?? null}
+      currentEmail={u?.email ?? ''}
+    />
+  )
 }
 
 function Inner({
@@ -54,22 +62,24 @@ function Inner({
   role,
   defaults,
   avatarUrl,
+  currentEmail,
 }: {
   id?: string
   role: ManagedRole
   defaults: UserForm
   avatarUrl: string | null
+  currentEmail: string
 }) {
   const qc = useQueryClient()
   const navigate = useNavigate()
   const toast = useToast()
   const hqs = useLookup('hq')
   const create = useCreateUser(role)
-  const update = useUpdateUser(id ?? '', role)
+  const update = useUpdateUser(id ?? '', role, currentEmail)
   const [link, setLink] = useState<string | null>(null)
   const meta = ROLE_META[role]
   useSubTitle(`${id ? 'Edit' : 'Add'} ${meta.label}`) // "Add Staff", "Edit Driver" … as in the approved HTML
-  const emailLocked = !!id && role !== 'manager' // login identity
+  const emailLocked = !!id && role === 'admin' // a Super Admin's email is their invite identity
   const {
     register,
     handleSubmit,
@@ -116,11 +126,9 @@ function Inner({
           if (r.invite_link) setLink(r.invite_link)
           else {
             toast(
-              role === 'manager'
-                ? 'Doctor’s Manager added'
-                : usesPassword(role)
-                  ? `${meta.label} added — they can sign in with the password you set`
-                  : 'User added — invite email sent',
+              usesPassword(role)
+                ? `${meta.label} added — they can sign in with the password you set`
+                : 'User added — invite email sent',
             )
             back()
           }
@@ -139,32 +147,25 @@ function Inner({
       onSubmit={onSubmit}
     >
       <Section title="Profile" icon={UserRound}>
-        {role !== 'manager' && (
-          <PhotoField
-            name={fullName}
-            current={avatarUrl}
-            blob={photo}
-            removed={photoRemoved}
-            onPick={(b) => {
-              setPhoto(b)
-              setPhotoRemoved(false)
-            }}
-            onRemove={() => {
-              setPhoto(null)
-              setPhotoRemoved(true)
-            }}
-            onError={(m) => toast(m, 'error')}
-          />
-        )}
+        <PhotoField
+          name={fullName}
+          current={avatarUrl}
+          blob={photo}
+          removed={photoRemoved}
+          onPick={(b) => {
+            setPhoto(b)
+            setPhotoRemoved(false)
+          }}
+          onRemove={() => {
+            setPhoto(null)
+            setPhotoRemoved(true)
+          }}
+          onError={(m) => toast(m, 'error')}
+        />
         <Field label="Full name" required error={errors.full_name?.message}>
           <input className={inputCls} placeholder="e.g. Karthik Raman" {...register('full_name')} />
         </Field>
-        <Field
-          label="Phone"
-          required
-          error={errors.phone?.message}
-          hint={role === 'manager' ? 'Managers sign in with this number only.' : undefined}
-        >
+        <Field label="Phone" required error={errors.phone?.message}>
           <div className="input-group">
             <span className="prefix">+91</span>
             <input
@@ -180,16 +181,16 @@ function Inner({
         </Field>
         <Field
           label="Email"
-          required={role !== 'manager'}
+          required
           error={errors.email?.message}
           hint={
             emailLocked
               ? 'Email is the login identity and can’t be changed here.'
-              : role !== 'manager'
-                ? usesPassword(role)
-                  ? `The ${role} signs in with this email and the password. No email is sent.`
-                  : 'Login invite will be sent to this email.'
-                : undefined
+              : usesPassword(role)
+                ? id
+                  ? `Changing this changes how the ${role} signs in.`
+                  : `The ${role} signs in with this email and the password. No email is sent.`
+                : 'Login invite will be sent to this email.'
           }
         >
           <input

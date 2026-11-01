@@ -7,10 +7,6 @@ enable_signup = false            # no self sign-up: Admin creates every user (PL
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 
-# Public endpoint: the manager is not signed in yet. Rate-limited inside the function.
-[functions.manager-phone-login]
-verify_jwt = false
-
 # Called by Postgres (pg_net) with a shared secret header, not a user JWT.
 [functions.notify]
 verify_jwt = false

@@ -85,7 +85,7 @@ export function AdminRequestsPage() {
     <>
       <PageHeader
         title="Service Requests"
-        subtitle="Raised by doctor’s managers"
+        subtitle="Raised by managers"
         action={
           <div className="flex gap-2">
             <Link to="/admin/service-requests/import" className="btn btn-ghost">

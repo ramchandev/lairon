@@ -17,7 +17,7 @@ export const DRIVER_TABS = [
 ]
 
 export const MANAGER_TABS = [
-  { to: '/m', label: 'My Doctors', icon: Stethoscope, end: true },
+  { to: '/m', label: 'Doctors', icon: Stethoscope, end: true }, // HTML says "My Doctors"; managers now see every doctor
   { to: '/m/request', label: 'New Request', icon: ClipboardPlus },
   { to: '/m/requests', label: 'My Requests', icon: ClipboardList },
   { to: '/m/profile', label: 'Profile', icon: UserRound },

@@ -10,6 +10,7 @@ import { ActiveBadge, StatusBadge } from '@/components/StatusBadge'
 import { useToast } from '@/components/Toast'
 import { CallLink } from '@/features/users/components'
 import { fmtDate, inr } from '@/lib/format'
+import { DoctorRevenue } from '../components/DoctorRevenue'
 import { useDeleteDoctor, useDoctor, useDoctorHistory } from '../api'
 import { doctorPaths } from '../paths'
 
@@ -33,6 +34,7 @@ export function DoctorDetailPage() {
   if (!profile || isLoading) return <p className="text-muted">Loading…</p>
   if (!d) return <p className="glass p-5">Doctor not found.</p>
   const paths = doctorPaths(profile.role)
+  const canEdit = profile.role === 'admin' || d.manager_id === profile.id // managers edit only the doctors they added
 
   const rows: [string, React.ReactNode][] = [
     ['Division', d.division],
@@ -43,7 +45,7 @@ export function DoctorDetailPage() {
     ['Area', d.area],
     ['HQ', d.hq],
     ['Email', d.email],
-    ['Doctor’s Manager', profile.role === 'admin' ? d.manager_name : null],
+    ['Added by', d.manager_name],
     ['Notes', d.notes],
   ]
 
@@ -68,15 +70,19 @@ export function DoctorDetailPage() {
               </div>
             ))}
         </dl>
-        <div className="mt-4 flex flex-wrap gap-2 border-t border-line pt-4">
-          <Link to={paths.edit(d.id)} className="btn btn-ghost">
-            <Pencil aria-hidden /> Edit
-          </Link>
-          <button className="btn btn-soft-danger" onClick={() => setConfirm(true)}>
-            <Trash2 aria-hidden /> Delete
-          </button>
-        </div>
+        {canEdit && (
+          <div className="mt-4 flex flex-wrap gap-2 border-t border-line pt-4">
+            <Link to={paths.edit(d.id)} className="btn btn-ghost">
+              <Pencil aria-hidden /> Edit
+            </Link>
+            <button className="btn btn-soft-danger" onClick={() => setConfirm(true)}>
+              <Trash2 aria-hidden /> Delete
+            </button>
+          </div>
+        )}
       </section>
+
+      <DoctorRevenue doctorId={d.id} doctorName={d.name} />
 
       <h2 className="sec-h">Service request history</h2>
       {history.isLoading ? (

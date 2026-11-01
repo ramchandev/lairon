@@ -135,10 +135,10 @@ begin
   reset role;
 
   -- manager: only own doctors; cannot approve own batch
-  insert into doctors (manager_id, name) values ('00000000-0000-0000-0000-0000000000c1', 'Dr One'), ('00000000-0000-0000-0000-0000000000c2', 'Dr Two');
+  insert into doctors (manager_id, name, phone) values ('00000000-0000-0000-0000-0000000000c1', 'Dr One', '+919111111101'), ('00000000-0000-0000-0000-0000000000c2', 'Dr Two', '+919111111102');
   perform pg_temp.as_user('00000000-0000-0000-0000-0000000000c1');
-  perform pg_temp.assert_eq((select count(*)::int from doctors), 1, 'manager sees only own doctors');
-  perform pg_temp.expect_error($q$insert into doctors (manager_id, name) values ('00000000-0000-0000-0000-0000000000c2', 'Sneaky')$q$, 'manager cannot add doctor for another manager');
+  perform pg_temp.assert_eq((select count(*)::int from doctors), 2, 'manager sees every doctor (edits only their own)');
+  perform pg_temp.expect_error($q$insert into doctors (manager_id, name, phone) values ('00000000-0000-0000-0000-0000000000c2', 'Sneaky', '+919111111103')$q$, 'manager cannot add doctor for another manager');
   insert into service_request_batches (manager_id, accountability_staff_id) values (auth.uid(), '00000000-0000-0000-0000-0000000000b1');
   perform pg_temp.assert_eq((select count(*)::int from profiles where role = 'staff'), 1, 'manager reads staff directory');
   perform pg_temp.assert_eq((select count(*)::int from profiles), 2, 'manager sees self + staff only');

@@ -49,11 +49,14 @@ export function RequestsImportPage() {
           <div>
             <b>Request</b>
             <p className="muted text-[13px]">
-              Request No (blank = new number) · Doctor’s Manager · Accountability · Status · Admin
-              Note · Submitted On
+              Request No (blank = new number) · Manager · Accountability · Status · Admin Note ·
+              Submitted On
             </p>
             <ul className="text-[13px]">
-              <li>Manager and staff by exact name or mobile number</li>
+              <li>
+                Manager (and Accountability, optional — blank = the manager) by exact name or mobile
+                number
+              </li>
               <li>Status: Submitted, Approved, Rejected (needs a note) or Fulfilled</li>
               <li>A Request No that already exists is rejected</li>
             </ul>
@@ -75,7 +78,7 @@ export function RequestsImportPage() {
       parse: (records) =>
         parseRequests(records, {
           managers: managers.data ?? [],
-          staff: staff.data ?? [],
+          staff: [...(staff.data ?? []), ...(managers.data ?? [])],
           doctors: (doctors.data ?? []).map((d) => ({
             id: d.id,
             name: d.name,

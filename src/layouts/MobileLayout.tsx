@@ -7,7 +7,7 @@ import { BottomNav, Brand, TopBar, iconBtn, useRouteChrome, type TabItem } from 
 export type { TabItem }
 
 /**
- * Driver / Doctor's Manager / Staff shell — the prototype's "role app": no sidebar, brand + role label in the top bar,
+ * Driver / Manager / Staff shell — the prototype's "role app": no sidebar, brand + role label in the top bar,
  * avatar → profile on the right, a bottom tab bar that stays centred (560px) on desktop and disappears on sub-pages,
  * and a 680px content column.
  */

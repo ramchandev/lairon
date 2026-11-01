@@ -46,7 +46,16 @@ export const USER_TEMPLATE_ROWS: (string | number)[][] = [
     'Staff@2026',
   ],
   ['Driver', 'Ravikumar N', '9884033456', 'ravikumar@lairon.in', '', '', '', 'Driver@2026'],
-  ['Manager', 'Anitha Rao', '9790011223', '', 'Anna Nagar', 'CHN', '', ''],
+  [
+    'Manager',
+    'Anitha Rao',
+    '9790011223',
+    'anitha@lairon.in',
+    'Anna Nagar',
+    'CHN',
+    '',
+    'Manager@2026',
+  ],
 ]
 
 export interface UserRow extends BulkRow {
@@ -116,8 +125,7 @@ export function parseUsers(records: Rec[], ctx: UserCtx): { rows: UserRow[]; iss
 
     const email = text(r.email).toLowerCase()
     if (email && !emailOk(email)) err(`“${email}” is not a valid email`)
-    else if (!email && role && role !== 'manager')
-      err('Email is required (the login invite is sent there)')
+    else if (!email && role) err('Email is required (it is their login)')
     else if (email) {
       if (ctx.existingEmails.has(email)) err(`${email} already belongs to a user`)
       else if (seenEmails.has(email)) err(`Same email as row ${seenEmails.get(email)} in this file`)
@@ -133,8 +141,8 @@ export function parseUsers(records: Rec[], ctx: UserCtx): { rows: UserRow[]; iss
     const password = text(r.password)
     if (role && usesPassword(role)) {
       if (password.length < 8)
-        err('Staffs and Drivers need a Password of at least 8 characters (no email is sent)')
-    } else if (password) warn('Password is only used for Staffs and Drivers — ignored')
+        err('A Password of at least 8 characters is required (no email is sent)')
+    } else if (password) warn('Password isn’t used for this role — ignored')
     const bio = text(r.bio)
     if (bio.length > 500) err('Bio is longer than 500 characters')
 

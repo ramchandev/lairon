@@ -109,7 +109,7 @@ export function Field({
 }: {
   label: string
   error?: string
-  hint?: string
+  hint?: ReactNode
   /** For composite controls (segmented, radio groups): a plain wrapper, not a <label>, so the first button isn't misnamed. */
   group?: boolean
   required?: boolean

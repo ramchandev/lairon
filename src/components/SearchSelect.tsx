@@ -7,6 +7,8 @@ import { Portal } from './Portal'
 export interface Option {
   value: string
   label: string
+  /** Secondary line (also searched), e.g. a doctor's area and phone. */
+  hint?: string
 }
 
 interface Props {
@@ -22,7 +24,7 @@ interface Props {
   note?: string
 }
 
-const SEARCH_THRESHOLD = 7
+const SEARCH_THRESHOLD = 5
 
 /** Button-styled field that opens a picker: bottom sheet on phones, centred dialog on larger screens. */
 export function SearchSelect({
@@ -41,7 +43,10 @@ export function SearchSelect({
   const [otherText, setOtherText] = useState('')
 
   const filtered = useMemo(
-    () => options.filter((o) => o.label.toLowerCase().includes(q.trim().toLowerCase())),
+    () =>
+      options.filter((o) =>
+        `${o.label} ${o.hint ?? ''}`.toLowerCase().includes(q.trim().toLowerCase()),
+      ),
     [options, q],
   )
   const selectedLabel = options.find((o) => o.value === value)?.label ?? value
@@ -121,7 +126,10 @@ export function SearchSelect({
                         onClick={() => pick(o)}
                         className="flex min-h-11 w-full items-center justify-between gap-2 rounded-lg px-3 text-left hover:bg-primary-soft"
                       >
-                        <span>{o.label}</span>
+                        <span className="min-w-0">
+                          <span className="block">{o.label}</span>
+                          {o.hint && <span className="muted block text-[13px]">{o.hint}</span>}
+                        </span>
                         {o.value === value && <Check className="size-4 text-primary" />}
                       </button>
                     </li>

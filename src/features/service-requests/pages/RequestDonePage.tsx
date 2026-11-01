@@ -42,7 +42,7 @@ export function RequestDonePage() {
           View request
         </Link>
         <Link to="/m/doctors" className="btn btn-ghost btn-lg">
-          Back to My Doctors
+          Back to Doctors
         </Link>
       </div>
     </section>

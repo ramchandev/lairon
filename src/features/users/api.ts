@@ -82,7 +82,8 @@ export function useCreateUser(role: ManagedRole) {
   })
 }
 
-export function useUpdateUser(id: string, role: ManagedRole) {
+/** `currentEmail`: the saved login email, to notice when the admin changes it. */
+export function useUpdateUser(id: string, role: ManagedRole, currentEmail = '') {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (v: UserForm) => {
@@ -93,8 +94,10 @@ export function useUpdateUser(id: string, role: ManagedRole) {
         hq: v.hq || null,
         bio: v.bio || null,
       }
-      // Staff/driver email is their login identity; only a manager's optional contact email is editable.
-      if (role === 'manager') patch.email = v.email || null
+      // The email is the login identity: changing it goes through the admin function (auth user + profile together).
+      const email = v.email.trim().toLowerCase()
+      if (usesPassword(role) && email && email !== currentEmail.toLowerCase())
+        await adminUserAction('set_email', id, undefined, email)
       const { error } = await supabase.from('profiles').update(patch).eq('id', id)
       if (error)
         throw new Error(

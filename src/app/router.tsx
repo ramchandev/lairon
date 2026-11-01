@@ -445,7 +445,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 index: true,
-                ...h('My Doctors'),
+                ...h('Doctors'),
                 ...page(() => import('@/features/doctors/pages/MyDoctorsPage'), 'MyDoctorsPage'),
               },
               {

@@ -59,5 +59,23 @@ export function seedPreview(qc: QueryClient) {
     divisions: 3,
     products: 81,
   })
-  qc.setQueryData(['batches', 'draft'], { id: 'd', status: 'draft', services: [{}, {}] })
+  qc.setQueryData(['batches', 'draft'], {
+    id: 'd',
+    status: 'draft',
+    services: [0, 1].map((i) => ({
+      id: `s${i}`,
+      doctor_name: 'Dr. Sample',
+      qualification: 'MD',
+      speciality: 'Cardiology',
+      division: 'OL',
+      service_type: 'CME',
+      service_amount: 5000,
+      offer_type: 'Offer',
+      offer_percent: 10,
+      netrate_amount: null,
+      hospital_name: 'Apollo',
+      expected_business_value: 20000,
+      current_business_value: 10000,
+    })),
+  })
 }

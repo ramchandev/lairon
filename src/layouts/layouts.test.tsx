@@ -128,13 +128,13 @@ describe('role apps', () => {
   })
   it('manager: four tabs and a draft badge on New Request', () => {
     mount(<ManagerLayout />, '/m', [{ index: true, ...page('My Doctors') }], '/m')
-    expect(screen.getByText("Doctor's Manager", { selector: 'small' })).toBeInTheDocument()
+    expect(screen.getByText('Manager', { selector: 'small' })).toBeInTheDocument()
     const bar = screen.getByRole('navigation', { name: 'Primary' })
     expect(
       within(bar)
         .getAllByRole('link')
         .map((a) => a.textContent),
-    ).toEqual(['My Doctors', 'New Request2', 'My Requests', 'Profile'])
+    ).toEqual(['Doctors', 'New Request2', 'My Requests', 'Profile'])
     expect(within(bar).getByLabelText('2 in draft')).toBeInTheDocument()
   })
 })

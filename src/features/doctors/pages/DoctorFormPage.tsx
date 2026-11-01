@@ -1,16 +1,24 @@
+import { useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@/app/AuthProvider'
 import { Field, FormPage, Section } from '@/components/FormPage'
-import { Building2, GraduationCap, ShieldCheck, Stethoscope } from 'lucide-react'
+import { Building2, GraduationCap, Info, ShieldCheck, Stethoscope } from 'lucide-react'
 import { SwitchRow } from '@/components/Switch'
 import { useToast } from '@/components/Toast'
 import { inputCls } from '@/components/form-styles'
 import { useLookup } from '@/features/lookups/hooks'
 import { useUsers } from '@/features/users/api'
 import { formatPhone } from '@/lib/phone'
-import { useDoctor, useSaveDoctor } from '../api'
+import { ConfirmDialog } from '@/components/ConfirmDialog'
+import {
+  DuplicatePhoneError,
+  findDoctorByPhone,
+  useDoctor,
+  useSaveDoctor,
+  type DoctorMatch,
+} from '../api'
 import { ProfessionalFields } from '../components/ProfessionalFields'
 import { doctorPaths } from '../paths'
 import { doctorSchema, type DoctorForm } from '../schemas'
@@ -63,14 +71,32 @@ function Inner({ id, defaults }: { id?: string; defaults: DoctorForm }) {
     name: ['division', 'qualification', 'speciality'],
   })
 
-  const onSubmit = handleSubmit((v) => {
-    if (!v.manager_id) return setError('manager_id', { message: 'Choose a Doctor’s Manager' })
+  // The phone number is how duplicates are caught: when another doctor already has it, offer to use that doctor.
+  const [dup, setDup] = useState<DoctorMatch | null>(null)
+  const [askUse, setAskUse] = useState(false)
+  const chooseExisting = (d: DoctorMatch) =>
+    navigate(isAdmin ? paths.detail(d.id) : `/m/request/add?doctor=${d.id}`, { replace: true })
+  const checkPhone = async (phone: string) => {
+    const found = phone.trim() ? await findDoctorByPhone(phone, id) : null
+    setDup(found)
+    return found
+  }
+
+  const onSubmit = handleSubmit(async (v) => {
+    if (!v.manager_id) return setError('manager_id', { message: 'Choose a Manager' })
+    const found = await checkPhone(v.phone)
+    if (found) return setAskUse(true)
     save.mutate(v, {
       onSuccess: () => {
         toast(id ? 'Doctor updated' : 'Doctor added')
         navigate(paths.list, { replace: true })
       },
-      onError: (e) => toast(e.message, 'error'),
+      onError: async (e) => {
+        if (e instanceof DuplicatePhoneError) {
+          if (await checkPhone(v.phone)) setAskUse(true)
+          else toast(e.message, 'error')
+        } else toast(e.message, 'error')
+      },
     })
   })
 
@@ -83,11 +109,33 @@ function Inner({ id, defaults }: { id?: string; defaults: DoctorForm }) {
       saving={save.isPending}
       onSubmit={onSubmit}
     >
+      {dup && (
+        <div className="banner" role="alert">
+          <Info aria-hidden size={18} />
+          <div className="flex-1">
+            <b>This phone number is already in the system.</b>
+            <br />
+            {dup.name}
+            {[dup.area, dup.hospital_name].filter(Boolean).length > 0 &&
+              ` · ${[dup.area, dup.hospital_name].filter(Boolean).join(' · ')}`}
+            {dup.manager_name && <> · added by {dup.manager_name}</>}
+            <div className="mt-2">
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={() => chooseExisting(dup)}
+              >
+                Use this doctor
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <Section title="Doctor details" icon={Stethoscope}>
         <Field label="Doctor name" required error={errors.name?.message}>
           <input className={inputCls} placeholder="e.g. Dr. Anitha Rao" {...register('name')} />
         </Field>
-        <Field label="Phone" error={errors.phone?.message}>
+        <Field label="Phone" required error={errors.phone?.message}>
           <div className="input-group">
             <span className="prefix">+91</span>
             <input
@@ -95,20 +143,20 @@ function Inner({ id, defaults }: { id?: string; defaults: DoctorForm }) {
               type="tel"
               inputMode="numeric"
               maxLength={10}
-              placeholder="Optional"
-              {...register('phone')}
+              placeholder="10-digit mobile"
+              {...register('phone', { onBlur: (e) => void checkPhone(e.target.value) })}
             />
           </div>
         </Field>
         {isAdmin && (
           <Field
-            label="Doctor’s Manager"
+            label="Manager"
             required
             error={errors.manager_id?.message}
             hint="Changing this reassigns the doctor. Past requests are unaffected."
           >
             <select className={inputCls} {...register('manager_id')}>
-              <option value="">Select doctor’s manager</option>
+              <option value="">Select manager</option>
               {managers.data
                 ?.filter((m) => m.is_active || m.id === defaults.manager_id)
                 .map((m) => (
@@ -178,6 +226,26 @@ function Inner({ id, defaults }: { id?: string; defaults: DoctorForm }) {
           )}
         />
       </Section>
+      <ConfirmDialog
+        open={askUse && !!dup}
+        tone="primary"
+        title="Doctor already in the system"
+        confirmLabel="Yes, use this doctor"
+        cancelLabel="No, change the number"
+        description={
+          dup && (
+            <>
+              <b>{dup.name}</b>
+              {[dup.area, dup.hospital_name].filter(Boolean).length > 0 &&
+                ` (${[dup.area, dup.hospital_name].filter(Boolean).join(', ')})`}{' '}
+              already uses this phone number. Do you want to use this doctor’s info instead of
+              adding a new one?
+            </>
+          )
+        }
+        onCancel={() => setAskUse(false)}
+        onConfirm={() => dup && chooseExisting(dup)}
+      />
     </FormPage>
   )
 }

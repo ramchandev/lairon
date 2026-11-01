@@ -186,7 +186,7 @@ export function UsersPage({ role }: { role: ManagedRole }) {
               label={`Edit ${u.full_name}`}
               icon={Pencil}
             />
-            {role !== 'manager' && u.is_active && u.id !== profile?.id && (
+            {role === 'admin' && u.is_active && u.id !== profile?.id && (
               <IconButton
                 label={`Resend invite to ${u.full_name}`}
                 icon={Mail}

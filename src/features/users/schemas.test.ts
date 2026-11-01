@@ -21,10 +21,11 @@ describe('driver password', () => {
     expect(userSchema('driver', true).safeParse(driver).success).toBe(true)
     expect(userSchema('driver', true).safeParse({ ...driver, password: 'abc' }).success).toBe(false)
   })
-  it('applies to staff too, but not to managers or super admins', () => {
-    expect(userSchema('staff').safeParse(driver).success).toBe(false)
-    expect(userSchema('staff').safeParse({ ...driver, password: 'longenough' }).success).toBe(true)
-    expect(userSchema('manager').safeParse(driver).success).toBe(true)
+  it('applies to staff and managers too, but not to super admins (they get an invite)', () => {
+    for (const r of ['staff', 'manager'] as const) {
+      expect(userSchema(r).safeParse(driver).success).toBe(false)
+      expect(userSchema(r).safeParse({ ...driver, password: 'longenough' }).success).toBe(true)
+    }
     expect(userSchema('admin').safeParse(driver).success).toBe(true)
   })
 })
@@ -37,11 +38,13 @@ describe('userSchema', () => {
       userSchema('staff').safeParse({ ...base, email: 'a@b.in', password: 'longenough' }).success,
     ).toBe(true)
   })
-  it('makes email optional for managers but validates it when present', () => {
-    expect(userSchema('manager').safeParse(base).success).toBe(true)
-    expect(userSchema('manager').safeParse({ ...base, email: 'nope' }).success).toBe(false)
+  it('requires a valid email for managers too (they sign in like everyone else)', () => {
+    const m = { ...base, password: 'longenough' }
+    expect(userSchema('manager').safeParse(m).success).toBe(false)
+    expect(userSchema('manager').safeParse({ ...m, email: 'nope' }).success).toBe(false)
+    expect(userSchema('manager').safeParse({ ...m, email: 'm@lairon.in' }).success).toBe(true)
   })
   it('rejects a bad phone', () => {
-    expect(userSchema('manager').safeParse({ ...base, phone: '12345' }).success).toBe(false)
+    expect(userSchema('staff').safeParse({ ...base, phone: '12345' }).success).toBe(false)
   })
 })

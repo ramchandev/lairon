@@ -17,7 +17,7 @@ import {
 
 const ROLES: ManagedRole[] = ['staff', 'driver', 'manager']
 
-/** Import Staffs, Drivers and Doctor's Managers from a sheet (Super Admins are added one by one). */
+/** Import Staffs, Drivers and Managers from a sheet (Super Admins are added one by one). */
 export function UsersImportPage() {
   const [params] = useSearchParams()
   const asked = params.get('role') as ManagedRole | null
@@ -35,7 +35,7 @@ export function UsersImportPage() {
 
   const cfg = useMemo<BulkConfig<UserRow>>(
     () => ({
-      intro: `Upload a sheet of ${defaultRole ? ROLE_META[defaultRole].plural.toLowerCase() : 'staffs, drivers and doctor’s managers'}. Staffs and Drivers are created with the Password you give (no email is sent); Doctor’s Managers sign in with their phone. You review every row before anything is created.`,
+      intro: `Upload a sheet of ${defaultRole ? ROLE_META[defaultRole].plural.toLowerCase() : 'staffs, drivers and managers'}. Staffs and Drivers are created with the Password you give (no email is sent); Managers sign in with their phone. You review every row before anything is created.`,
       fields: USER_FIELDS,
       templateFile: 'users-import-template.xlsx',
       templateHeader: USER_TEMPLATE_HEADER,
