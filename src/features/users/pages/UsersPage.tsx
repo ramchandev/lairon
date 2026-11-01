@@ -179,6 +179,7 @@ export function UsersPage({ role }: { role: ManagedRole }) {
         rows={rows}
         columns={columns}
         rowKey={(u) => u.id}
+        rowTo={(u) => `/admin/users/${u.id}/edit?role=${role}`}
         loading={isLoading}
         empty={
           <EmptyState

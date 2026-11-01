@@ -27,7 +27,7 @@ export const packsToRows = (packs: Pack[]): Cell[][] =>
       p.doctor_area,
       p.staff_name,
       p.staff_area,
-      p.division,
+      i.division ?? p.division,
       PACK_LABEL[p.status],
       i.product_name,
       i.quantity,

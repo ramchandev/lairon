@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Building2, ClipboardPlus, Inbox, MapPin, Pencil, Phone, UserPlus } from 'lucide-react'
+import { Building2, ClipboardPlus, Inbox, MapPin, Pencil, UserPlus } from 'lucide-react'
 import { useAuth } from '@/app/AuthProvider'
 import { Avatar } from '@/components/Avatar'
 import { EmptyState } from '@/components/EmptyState'
@@ -127,7 +127,6 @@ export function MyDoctorsPage() {
                 )}
                 {d.phone && (
                   <span>
-                    <Phone aria-hidden />
                     <CallLink phone={d.phone} />
                   </span>
                 )}

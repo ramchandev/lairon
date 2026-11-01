@@ -10,6 +10,8 @@ export interface PackItem {
   product_name: string
   quantity: string
   sort_order: number
+  /** Division of this product line (older packs: null → the pack's division). */
+  division: string | null
 }
 export interface Pack {
   id: string

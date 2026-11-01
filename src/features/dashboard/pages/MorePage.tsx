@@ -118,6 +118,13 @@ export function MorePage() {
       tone: 'danger',
     },
     {
+      key: 'reports',
+      root: 'reports',
+      label: 'Revenue Report',
+      sub: 'Revenue by doctor',
+      tone: 'ok',
+    },
+    {
       key: 'dropdowns',
       root: 'dropdowns',
       label: 'Dropdowns',

@@ -45,7 +45,15 @@ describe('admin navigation matches the approved HTML', () => {
     { r: 'doctors', label: 'Doctors', icon: 'stethoscope' },
     { r: 'super-admins', label: 'Super Admins', icon: 'shield-check' },
   ]
-  const protoNav = rawNav.map((g) => (g.group === 'People' ? { ...g, items: PEOPLE } : g))
+  // The other: a Revenue Report link (revenue by doctor) under Overview.
+  const REPORT: ProtoItem = { r: 'reports', label: 'Revenue Report', icon: 'indian-rupee' }
+  const protoNav = rawNav.map((g) =>
+    g.group === 'People'
+      ? { ...g, items: PEOPLE }
+      : g.group === 'Overview'
+        ? { ...g, items: [...g.items, REPORT] }
+        : g,
+  )
   const protoBottom = evalArray<ProtoItem[]>(block('BOTTOM'))
   const protoMore = evalArray<string[]>(block('MORE_ROOTS'))
 

@@ -71,17 +71,18 @@ function PackPage({ pack, company }: { pack: Pack; company: string }) {
           <Text style={s.title}>Requested by</Text>
           <Text style={s.strong}>{pack.staff_name}</Text>
           <Text style={s.muted}>{pack.staff_area}</Text>
-          <Text>Division: {pack.division}</Text>
         </View>
       </View>
       <View style={s.th}>
         <Text style={[s.cell, { width: 40 }]}>S.No</Text>
+        <Text style={[s.cell, { width: 70 }]}>Division</Text>
         <Text style={[s.cell, { flex: 1 }]}>Product</Text>
         <Text style={[s.cell, { width: 110 }]}>Qty</Text>
       </View>
       {pack.items.map((i, n) => (
         <View key={i.id} style={s.tr} wrap={false}>
           <Text style={[s.cell, { width: 40 }]}>{n + 1}</Text>
+          <Text style={[s.cell, { width: 70 }]}>{i.division ?? pack.division}</Text>
           <Text style={[s.cell, { flex: 1 }]}>{i.product_name}</Text>
           <Text style={[s.cell, { width: 110 }]}>{i.quantity}</Text>
         </View>

@@ -12,7 +12,6 @@ export function PackSummary({ pack }: { pack: Pack }) {
     ['Doctor area', pack.doctor_area],
     ['Staff', pack.staff_name],
     ['Staff area', pack.staff_area],
-    ['Division', <span className="tag">{pack.division}</span>],
   ]
   return (
     <>
@@ -51,6 +50,7 @@ export function PackSummary({ pack }: { pack: Pack }) {
           {pack.items.map((i, n) => (
             <li key={i.id}>
               <span className="sn">{n + 1}</span>
+              <span className="tag">{i.division ?? pack.division}</span>
               <span className="pname">{i.product_name}</span>
               <span className="qty">{i.quantity}</span>
             </li>

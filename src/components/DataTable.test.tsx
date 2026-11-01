@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { DataTable, type Column } from './DataTable'
 
 interface Row {
@@ -40,5 +41,45 @@ describe('DataTable', () => {
     expect(screen.getByText('Nothing here')).toBeInTheDocument()
     rerender(<DataTable rows={[]} columns={columns} rowKey={(r) => r.id} loading />)
     expect(screen.getByLabelText('Loading')).toBeInTheDocument()
+  })
+
+  describe('clickable rows', () => {
+    const Where = () => <p data-testid="where">{useLocation().pathname}</p>
+    const setup = (rowTo: (r: Row) => string | null) =>
+      render(
+        <MemoryRouter initialEntries={['/list']}>
+          <Routes>
+            <Route
+              path="/list"
+              element={
+                <DataTable
+                  rows={rows.slice(0, 2)}
+                  columns={columns}
+                  rowKey={(r) => r.id}
+                  rowTo={rowTo}
+                  actions={(r) => <button>Delete {r.name}</button>}
+                />
+              }
+            />
+            <Route path="/item/:id" element={<Where />} />
+          </Routes>
+        </MemoryRouter>,
+      )
+
+    it('opens the row when you click anywhere on it', async () => {
+      setup((r) => `/item/${r.id}`)
+      await userEvent.click(screen.getByText('Area 1'))
+      expect(screen.getByTestId('where')).toHaveTextContent('/item/1')
+    })
+    it('leaves buttons and links inside the row alone', async () => {
+      setup((r) => `/item/${r.id}`)
+      await userEvent.click(screen.getByRole('button', { name: 'Delete Person 0' }))
+      expect(screen.queryByTestId('where')).toBeNull()
+    })
+    it('a row whose target is null is not clickable', async () => {
+      setup((r) => (r.id === '0' ? null : `/item/${r.id}`))
+      await userEvent.click(screen.getByText('Area 0'))
+      expect(screen.queryByTestId('where')).toBeNull()
+    })
   })
 })

@@ -212,3 +212,11 @@ The portal's navigation now matches `design/lairon-ez-prototype.html` (pixel-com
   - **Everything**: Managers list → **Hand over work** (↔) moves all of a manager's doctors and non-draft requests to another manager; **Deactivate** on a manager first offers this ("Hand over, then deactivate" or "Deactivate without handing over").
   - Every move is recorded (**Handed over** list on the request: who → who, when, note); the new manager sees the full history and continues the revenue; the previous one no longer can.
 - **Database**: migration **17** (`service_revenue`, `set_service_revenue()`, `doctor_revenue_summary()`, `request_handovers`, `reassign_request()`, `transfer_manager_work()`, `manager_workload()`; drops the interim doctor-level table), SQL suite `phase11`. Apply **16 first (if not yet), then 17**.
+
+## Round 3 — client feedback (rows, specialities, report, pack lines)
+
+- **Whole row is clickable** in every admin table (`DataTable` `rowTo` / `onRowClick`); buttons, links and text selection inside a row still work normally.
+- **Doctors:** several specialities can be picked (`MultiSearchSelect`, stored comma-separated); duplicate phone icon removed from the manager doctor card.
+- **Service request & starter pack forms:** a chosen doctor's qualification and area show as a read-only card (`DoctorInfoCard`); the fields appear only when the doctor has no such data or was typed by hand.
+- **Starter packs:** each product line has its own Division → Product → Quantity. Migration `20261018000018` adds `starter_pack_items.division` (backfilled from the pack) and updates `create_starter_pack` / `import_starter_packs`; the pack-level division is the joined set of line divisions. PDF, CSV export, summary and import follow.
+- **Revenue Report** (admin, `/admin/reports`, under Overview): revenue by doctor per month for the last 3/6/12 months, KPI tiles, search, CSV export, row → doctor. Backed by the admin-only `revenue_by_doctor(p_from, p_to)` RPC. A deliberate addition to the approved nav (documented in `adminNav.ts` and the nav guard test).

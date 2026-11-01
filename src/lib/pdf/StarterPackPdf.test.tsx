@@ -26,6 +26,7 @@ const mk = (n: number): Pack => ({
     product_name: `Product ${i}`,
     quantity: '1 box',
     sort_order: i,
+    division: 'OL',
   })),
 })
 

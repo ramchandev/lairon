@@ -70,6 +70,7 @@ export function AllDriversTab({
         rows={rows}
         columns={columns}
         rowKey={(r) => r.id}
+        onRowClick={(r) => onOpen(r.id)}
         loading={drivers.isLoading || entries.isLoading}
         pageSize={50}
         empty={<EmptyState icon={Users} title="No drivers yet" hint="Add drivers under Users." />}

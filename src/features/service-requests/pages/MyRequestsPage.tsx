@@ -117,6 +117,7 @@ export function MyRequestsPage() {
             rows={rows}
             columns={columns}
             rowKey={(b) => b.id}
+            rowTo={(b) => `/m/requests/view/${b.id}`}
             empty={
               <EmptyState icon={ClipboardList} title="No results" hint="Try a different search." />
             }

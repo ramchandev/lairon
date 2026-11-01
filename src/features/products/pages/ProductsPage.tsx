@@ -93,6 +93,7 @@ export function ProductsPage() {
         rows={rows}
         columns={columns}
         rowKey={(p) => p.id}
+        rowTo={(p) => `/admin/products/${p.id}/edit`}
         loading={isLoading}
         empty={
           <EmptyState

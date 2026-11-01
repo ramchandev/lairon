@@ -189,6 +189,7 @@ export function AdminRequestsPage() {
         rows={rows}
         columns={columns}
         rowKey={(b) => b.id}
+        rowTo={(b) => `/admin/service-requests/${b.id}`}
         loading={isLoading}
         empty={
           <EmptyState icon={Inbox} title="Nothing here yet" hint="New requests will appear here." />

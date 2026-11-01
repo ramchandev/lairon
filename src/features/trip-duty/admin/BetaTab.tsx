@@ -313,6 +313,7 @@ export function BetaTab({
             rows={rows}
             columns={columns}
             rowKey={(r) => r.driver_id}
+            onRowClick={(r) => onDriver(r.driver_id)}
             loading={summary.isLoading}
             pageSize={50}
             empty={<EmptyState icon={CarFront} title="No drivers yet" />}

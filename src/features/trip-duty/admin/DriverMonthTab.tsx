@@ -240,6 +240,9 @@ export function DriverMonthTab({
             rows={rows}
             columns={columns}
             rowKey={(e) => e.id}
+            rowTo={(e) =>
+              e.entry_type === 'duty' ? `/admin/trip-duty/entries/${e.id}/edit?m=${month}` : null
+            }
             loading={entries.isLoading}
             pageSize={50}
             empty={<EmptyState icon={Truck} title="No entries this month" />}

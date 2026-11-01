@@ -11,6 +11,7 @@ import { useDoctors } from '@/features/doctors/api'
 import { ProfessionalFields } from '@/features/doctors/components/ProfessionalFields'
 import { useLookup } from '@/features/lookups/hooks'
 import { formatPhone } from '@/lib/phone'
+import { DoctorInfoCard } from '@/features/doctors/components/DoctorInfoCard'
 import { isNetrate, isOffer, serviceSchema, type ServiceForm } from '../schemas'
 import { useDraftBatch, useEnsureDraft, useSaveService, type Service } from '../api'
 
@@ -88,6 +89,14 @@ function Inner({ batchId, id, existing }: { batchId: string; id?: string; existi
   const mark = { shouldDirty: true } as const
 
   const activeDoctors = (doctors.data ?? []).filter((d) => d.is_active || d.id === doctorId)
+  const selected = doctorId ? activeDoctors.find((d) => d.id === doctorId) : undefined
+  const manual = !doctorId && !!doctorName // an older service typed by hand (no directory doctor)
+  const missing = {
+    area: !selected?.area,
+    hq: !selected?.hq,
+    hospital: !selected?.hospital_name,
+    professional: !selected?.division || !selected?.qualification || !selected?.speciality,
+  }
   function pickDoctor(value: string, label: string) {
     const d = activeDoctors.find((x) => x.id === value)
     if (!d) {
@@ -183,47 +192,61 @@ function Inner({ batchId, id, existing }: { batchId: string; id?: string; existi
             onChange={pickDoctor}
           />
         </Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Area" required error={errors.area?.message}>
-            <input className={inputCls} {...register('area')} />
-          </Field>
-          <Field label="HQ" required error={errors.hq?.message}>
-            <select className={inputCls} {...register('hq')}>
-              <option value="">Select HQ</option>
-              {defaults.hq && !hqs.data?.some((h) => h.value === defaults.hq) && (
-                <option value={defaults.hq}>{defaults.hq}</option>
-              )}
-              {hqs.data?.map((h) => (
-                <option key={h.id} value={h.value}>
-                  {h.value}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Hospital name" required error={errors.hospital_name?.message}>
-            <input className={inputCls} {...register('hospital_name')} />
-          </Field>
-          <Field label="Pharmacy name">
-            <input className={inputCls} {...register('pharmacy_name')} />
-          </Field>
-        </div>
+        {selected && <DoctorInfoCard doctor={selected} />}
+        {/* A doctor picked from the directory is shown as a card; only details the doctor profile lacks are asked for. */}
+        {(selected ? missing.area || missing.hq || missing.hospital : manual) && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {(!selected || missing.area) && (
+              <Field label="Area" required error={errors.area?.message}>
+                <input className={inputCls} {...register('area')} />
+              </Field>
+            )}
+            {(!selected || missing.hq) && (
+              <Field label="HQ" required error={errors.hq?.message}>
+                <select className={inputCls} {...register('hq')}>
+                  <option value="">Select HQ</option>
+                  {defaults.hq && !hqs.data?.some((h) => h.value === defaults.hq) && (
+                    <option value={defaults.hq}>{defaults.hq}</option>
+                  )}
+                  {hqs.data?.map((h) => (
+                    <option key={h.id} value={h.value}>
+                      {h.value}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
+            {(!selected || missing.hospital) && (
+              <Field label="Hospital name" required error={errors.hospital_name?.message}>
+                <input className={inputCls} {...register('hospital_name')} />
+              </Field>
+            )}
+            {!selected && (
+              <Field label="Pharmacy name">
+                <input className={inputCls} {...register('pharmacy_name')} />
+              </Field>
+            )}
+          </div>
+        )}
       </Section>
 
-      <Section title="Professional details">
-        <ProfessionalFields
-          value={{ division, qualification, speciality }}
-          errors={{
-            division: errors.division?.message,
-            qualification: errors.qualification?.message,
-            speciality: errors.speciality?.message,
-          }}
-          onChange={(p) => {
-            setValue('division', p.division, mark)
-            setValue('qualification', p.qualification, mark)
-            setValue('speciality', p.speciality, mark)
-          }}
-        />
-      </Section>
+      {(selected ? missing.professional : manual) && (
+        <Section title="Professional details">
+          <ProfessionalFields
+            value={{ division, qualification, speciality }}
+            errors={{
+              division: errors.division?.message,
+              qualification: errors.qualification?.message,
+              speciality: errors.speciality?.message,
+            }}
+            onChange={(p) => {
+              setValue('division', p.division, mark)
+              setValue('qualification', p.qualification, mark)
+              setValue('speciality', p.speciality, mark)
+            }}
+          />
+        </Section>
+      )}
 
       <Section stack title="Service & business details">
         <div className="grid gap-4 sm:grid-cols-2">

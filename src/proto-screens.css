@@ -1078,4 +1078,10 @@
   .vtab[aria-selected='true'] {
     background: #fff;
   }
+  .dt tbody tr.row-link {
+    cursor: pointer;
+  }
+  .dt tbody tr.row-link:hover td {
+    background: rgba(43, 92, 198, 0.06);
+  }
 }

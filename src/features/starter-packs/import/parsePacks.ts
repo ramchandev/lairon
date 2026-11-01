@@ -146,14 +146,7 @@ export function parsePacks(records: Rec[], ctx: SpCtx): { rows: SpRow[]; issues:
     const ref_no = text(r.ref_no).toUpperCase()
     if (ref_no && ctx.existingRefs.has(ref_no)) err(`Request number ${ref_no} already exists`)
     const group =
-      ref_no ||
-      [
-        request_date ?? '',
-        norm(doctor_name),
-        norm(text(r.staff)),
-        norm(division),
-        status ?? '',
-      ].join('|')
+      ref_no || [request_date ?? '', norm(doctor_name), norm(text(r.staff)), status ?? ''].join('|')
 
     const docs = ctx.doctors.filter((d) => norm(d.name) === norm(doctor_name))
     const row: SpRow = {
@@ -203,10 +196,12 @@ export function toPacksPayload(rows: SpRow[], fileName: string) {
       doctor_area: g[0].doctor_area,
       staff_id: g[0].staff_id,
       staff_area: g[0].staff_area,
-      division: g[0].division,
+      // The pack's division summarises its lines (e.g. "CC, OL"); every line also keeps its own.
+      division: [...new Set(g.map((r) => r.division))].sort().join(', '),
       status: g[0].status,
       admin_note: g[0].note || null,
       items: g.map((r) => ({
+        division: r.division,
         product_id: r.product_id,
         product_name: r.product_name,
         quantity: r.quantity,

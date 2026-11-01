@@ -9,10 +9,10 @@ export const packSchema = z.object({
   staff_id: z.string(),
   staff_name: z.string().trim().min(1, 'Staff name is required'),
   staff_area: z.string().trim().min(1, 'Staff area is required'),
-  division: z.string().trim().min(1, 'Choose a division'),
   items: z
     .array(
       z.object({
+        division: z.string().trim().min(1, 'Choose a division'),
         product_id: z.string(),
         product_name: z.string().trim().min(1, 'Choose or type a product'),
         quantity: z.string().trim().min(1, 'Enter a quantity'),
@@ -21,4 +21,10 @@ export const packSchema = z.object({
     .min(1, 'Add at least one product'),
 })
 export type PackForm = z.infer<typeof packSchema>
-export const emptyItem = { product_id: '', product_name: '', quantity: '' }
+/** A new product line starts on the same division as the line above it (or "All Division"). */
+export const emptyItem = {
+  division: 'All Division',
+  product_id: '',
+  product_name: '',
+  quantity: '',
+}

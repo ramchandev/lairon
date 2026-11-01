@@ -25,6 +25,7 @@ const pack: Pack = {
       product_name: 'Lairobon',
       quantity: '1 box',
       sort_order: 0,
+      division: 'OL',
     },
     {
       id: '2',
@@ -33,6 +34,7 @@ const pack: Pack = {
       product_name: 'Other',
       quantity: '10 strips',
       sort_order: 1,
+      division: 'OL',
     },
   ],
 }

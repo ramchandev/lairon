@@ -50,7 +50,7 @@ export function AdminPacksPage() {
         if (from && p.request_date < from) return false
         if (to && p.request_date > to) return false
         if (staff && p.staff_name !== staff) return false
-        if (division && p.division !== division) return false
+        if (division && !p.items.some((i) => (i.division ?? p.division) === division)) return false
         return `${p.ref_no} ${p.doctor_name} ${p.staff_name} ${p.items.map((i) => i.product_name).join(' ')}`
           .toLowerCase()
           .includes(q.trim().toLowerCase())
@@ -193,6 +193,7 @@ export function AdminPacksPage() {
         rows={rows}
         columns={columns}
         rowKey={(p) => p.id}
+        rowTo={(p) => `/admin/starter-packs/${p.id}`}
         loading={isLoading}
         empty={
           <EmptyState icon={Inbox} title="Nothing here yet" hint="New requests will appear here." />

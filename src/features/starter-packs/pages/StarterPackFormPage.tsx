@@ -5,14 +5,14 @@ import { Link } from 'react-router-dom'
 import { CircleCheck, Pill, Plus, Stethoscope, Trash2, UserRound } from 'lucide-react'
 import { useAuth } from '@/app/AuthProvider'
 import { Avatar } from '@/components/Avatar'
-import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { Field, FormPage, Section } from '@/components/FormPage'
 import { SearchSelect } from '@/components/SearchSelect'
-import { Segmented } from '@/components/Segmented'
 import { useToast } from '@/components/Toast'
 import { inputCls } from '@/components/form-styles'
 import { useDivisions } from '@/features/divisions/api'
 import { useDoctors } from '@/features/doctors/api'
+import { DoctorInfoCard } from '@/features/doctors/components/DoctorInfoCard'
+import { formatPhone } from '@/lib/phone'
 import { ALL_DIVISION } from '@/features/lookups/cascade'
 import { useLookup } from '@/features/lookups/hooks'
 import { useProducts } from '@/features/products/api'
@@ -93,7 +93,6 @@ function Inner({
   const doctors = useDoctors()
   const qualifications = useLookup('qualification')
   const staff = useUsers('staff')
-  const [pendingDivision, setPendingDivision] = useState<string | null>(null)
 
   const form = useForm<PackForm>({
     resolver: zodResolver(packSchema),
@@ -106,7 +105,6 @@ function Inner({
       staff_id: keep?.staff_id ?? (isAdmin ? '' : profile!.id),
       staff_name: keep?.staff_name ?? (isAdmin ? '' : profile!.full_name),
       staff_area: keep?.staff_area ?? (isAdmin ? '' : (profile!.area ?? '')),
-      division: ALL_DIVISION,
       items: [emptyItem],
     },
   })
@@ -118,22 +116,24 @@ function Inner({
     formState: { errors, isDirty },
   } = form
   const { fields, append, remove, replace } = useFieldArray({ control, name: 'items' })
-  const [division, doctorId, doctorName, qualification, items, staffId] = useWatch({
+  const [doctorId, doctorName, qualification, items, staffId] = useWatch({
     control,
-    name: ['division', 'doctor_id', 'doctor_name', 'qualification', 'items', 'staff_id'],
+    name: ['doctor_id', 'doctor_name', 'qualification', 'items', 'staff_id'],
   })
   const mark = { shouldDirty: true } as const
 
-  const productOptions = productsForDivision(
-    products.data ?? [],
-    divisions.data ?? [],
-    division,
-  ).map((p) => ({ value: p.name, label: p.name }))
-  const divisionTabs = [
+  // Each product line has its own division, and its product list follows that division.
+  const divisionOptions = [
     ...(divisions.data ?? []).filter((d) => d.is_active).map((d) => d.name),
     ALL_DIVISION,
   ]
+  const optionsFor = (division: string) =>
+    productsForDivision(products.data ?? [], divisions.data ?? [], division).map((p) => ({
+      value: p.name,
+      label: p.name,
+    }))
 
+  const selected = doctorId ? doctors.data?.find((d) => d.id === doctorId) : undefined
   function pickDoctor(value: string, label: string) {
     const d = doctors.data?.find((x) => x.id === value)
     if (!d) {
@@ -147,13 +147,18 @@ function Inner({
     if (d.area) setValue('doctor_area', d.area, mark)
   }
 
-  function changeDivision(next: string) {
-    if (next === division) return
-    const hasWork = items.some((i) => i.product_name.trim() || i.quantity.trim())
-    if (hasWork)
-      setPendingDivision(next) // ask before clearing the rows
-    else setValue('division', next, mark)
+  function changeLineDivision(idx: number, next: string) {
+    setValue(`items.${idx}.division`, next, mark)
+    // A product picked from the old division's list that isn't in the new one is cleared (typed products stay).
+    const line = items[idx]
+    if (line?.product_id && !optionsFor(next).some((o) => o.value === line.product_name)) {
+      setValue(`items.${idx}.product_name`, '', mark)
+      setValue(`items.${idx}.product_id`, '', mark)
+    }
   }
+  /** A new line starts on the previous line's division. */
+  const addLine = () =>
+    append({ ...emptyItem, division: items[items.length - 1]?.division || ALL_DIVISION })
 
   const onSubmit = handleSubmit((v) =>
     create.mutate(v, {
@@ -238,115 +243,125 @@ function Inner({
             value={doctorId || doctorName}
             options={(doctors.data ?? [])
               .filter((d) => d.is_active)
-              .map((d) => ({ value: d.id, label: d.area ? `${d.name} · ${d.area}` : d.name }))}
+              .map((d) => ({
+                value: d.id,
+                label: d.name,
+                hint: [d.area, d.hospital_name, d.phone ? formatPhone(d.phone) : '']
+                  .filter(Boolean)
+                  .join(' · '),
+              }))}
             onChange={pickDoctor}
           />
         </Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Qualification" required error={errors.qualification?.message}>
-            <SearchSelect
-              title="Qualification"
-              placeholder="Select qualification"
-              allowOther
-              value={qualification}
-              options={(qualifications.data ?? []).map((q) => ({ value: q.value, label: q.value }))}
-              onChange={(v) => setValue('qualification', v, mark)}
-            />
-          </Field>
-          <Field label="Doctor area" required error={errors.doctor_area?.message}>
-            <input className={inputCls} {...register('doctor_area')} />
-          </Field>
-        </div>
+        {selected && <DoctorInfoCard doctor={selected} />}
+        {/* From the directory: a text card. Typed by hand (or a profile that lacks them): ask for what is missing. */}
+        {(selected ? !selected.qualification || !selected.area : !!doctorName) && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {(!selected || !selected.qualification) && (
+              <Field label="Qualification" required error={errors.qualification?.message}>
+                <SearchSelect
+                  title="Qualification"
+                  placeholder="Select qualification"
+                  allowOther
+                  value={qualification}
+                  options={(qualifications.data ?? []).map((q) => ({
+                    value: q.value,
+                    label: q.value,
+                  }))}
+                  onChange={(v) => setValue('qualification', v, mark)}
+                />
+              </Field>
+            )}
+            {(!selected || !selected.area) && (
+              <Field label="Doctor area" required error={errors.doctor_area?.message}>
+                <input className={inputCls} {...register('doctor_area')} />
+              </Field>
+            )}
+          </div>
+        )}
       </Section>
 
       <Section stack title="Products" icon={Pill}>
-        <Field group label="Division" error={errors.division?.message}>
-          <Segmented
-            label="Division"
-            options={divisionTabs}
-            value={division}
-            onChange={changeDivision}
-          />
-        </Field>
         <ul className="space-y-3">
-          {fields.map((f, idx) => (
-            <li key={f.id} className="rounded-control border border-line bg-white/60 p-3">
-              <div className="grid gap-3 sm:grid-cols-[1fr_10rem_auto] sm:items-start">
-                <Field
-                  label={`Product ${idx + 1}`}
-                  required
-                  error={errors.items?.[idx]?.product_name?.message}
-                >
-                  <Controller
-                    control={control}
-                    name={`items.${idx}.product_name`}
-                    render={({ field }) => (
-                      <SearchSelect
-                        title="Product"
-                        placeholder="Select product"
-                        allowOther
-                        value={field.value}
-                        options={productOptions}
-                        note={division === ALL_DIVISION ? undefined : `Products for ${division}`}
-                        onChange={(v) => {
-                          field.onChange(v)
-                          setValue(
-                            `items.${idx}.product_id`,
-                            products.data?.find((p) => p.name === v)?.id ?? '',
-                            mark,
-                          )
-                        }}
-                      />
-                    )}
-                  />
-                </Field>
-                <Field label="Quantity" required error={errors.items?.[idx]?.quantity?.message}>
-                  <input
-                    className={inputCls}
-                    placeholder="e.g. 1 box"
-                    {...register(`items.${idx}.quantity`)}
-                  />
-                </Field>
-                <button
-                  type="button"
-                  aria-label={`Remove product ${idx + 1}`}
-                  onClick={() => (fields.length === 1 ? replace([emptyItem]) : remove(idx))}
-                  className="icon-btn danger mt-6 border-line-2 bg-white/70"
-                >
-                  <Trash2 aria-hidden />
-                </button>
-              </div>
-            </li>
-          ))}
+          {fields.map((f, idx) => {
+            const division = items[idx]?.division ?? ALL_DIVISION
+            return (
+              <li key={f.id} className="rounded-control border border-line bg-white/60 p-3">
+                <div className="grid gap-3 sm:grid-cols-[10rem_1fr_9rem_auto] sm:items-start">
+                  <Field
+                    label={`Division ${idx + 1}`}
+                    required
+                    error={errors.items?.[idx]?.division?.message}
+                  >
+                    <select
+                      className={inputCls}
+                      value={division}
+                      onChange={(e) => changeLineDivision(idx, e.target.value)}
+                    >
+                      {divisionOptions.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field
+                    label={`Product ${idx + 1}`}
+                    required
+                    error={errors.items?.[idx]?.product_name?.message}
+                  >
+                    <Controller
+                      control={control}
+                      name={`items.${idx}.product_name`}
+                      render={({ field }) => (
+                        <SearchSelect
+                          title="Product"
+                          placeholder="Select product"
+                          allowOther
+                          value={field.value}
+                          options={optionsFor(division)}
+                          note={division === ALL_DIVISION ? undefined : `Products for ${division}`}
+                          onChange={(v) => {
+                            field.onChange(v)
+                            setValue(
+                              `items.${idx}.product_id`,
+                              products.data?.find((p) => p.name === v)?.id ?? '',
+                              mark,
+                            )
+                          }}
+                        />
+                      )}
+                    />
+                  </Field>
+                  <Field label="Quantity" required error={errors.items?.[idx]?.quantity?.message}>
+                    <input
+                      className={inputCls}
+                      placeholder="e.g. 1 box"
+                      {...register(`items.${idx}.quantity`)}
+                    />
+                  </Field>
+                  <button
+                    type="button"
+                    aria-label={`Remove product ${idx + 1}`}
+                    onClick={() => (fields.length === 1 ? replace([emptyItem]) : remove(idx))}
+                    className="icon-btn danger mt-6 border-line-2 bg-white/70"
+                  >
+                    <Trash2 aria-hidden />
+                  </button>
+                </div>
+              </li>
+            )
+          })}
         </ul>
         {typeof errors.items?.message === 'string' && (
           <p role="alert" className="text-xs text-danger">
             {errors.items.message}
           </p>
         )}
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => append(emptyItem)}>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={addLine}>
           <Plus aria-hidden /> Add product
         </button>
       </Section>
-
-      <ConfirmDialog
-        open={!!pendingDivision}
-        title="Switch division?"
-        confirmLabel="Switch and clear"
-        tone="danger"
-        description={
-          <>
-            The products you added will be cleared, because the list changes to{' '}
-            <b>{pendingDivision}</b>.
-          </>
-        }
-        onCancel={() => setPendingDivision(null)}
-        onConfirm={() => {
-          setValue('division', pendingDivision!, mark)
-          replace([emptyItem])
-          setPendingDivision(null)
-        }}
-      />
     </FormPage>
   )
 }

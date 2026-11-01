@@ -156,6 +156,11 @@ export function ImportUpload({
         rows={batches.data ?? []}
         columns={columns}
         rowKey={(b) => b.id}
+        rowTo={(b) =>
+          b.driver_id
+            ? `/admin/trip-duty?tab=month&driver=${b.driver_id}&m=${b.month.slice(0, 7)}`
+            : null
+        }
         loading={batches.isLoading}
         empty={<EmptyState icon={Inbox} title="No imports yet" />}
         actions={(b) => (

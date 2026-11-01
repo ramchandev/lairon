@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from 'react'
+import { useState, type MouseEvent, type ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 
 export interface Column<T> {
@@ -18,6 +19,44 @@ interface Props<T> {
   empty?: ReactNode
   actions?: (row: T) => ReactNode
   pageSize?: number
+  /** Makes the whole row clickable: where it leads (or null for a row that isn't). The action buttons keep working on their own. */
+  rowTo?: (row: T) => string | null
+  /** Same, for rows that open something other than a page (a dialog, a tab…). */
+  onRowClick?: (row: T) => void
+}
+
+const INTERACTIVE =
+  'a, button, input, select, textarea, label, summary, [role="switch"], [role="button"]'
+
+/** A table row you can click anywhere on (clicks on links/buttons inside it are left alone). */
+function ClickableRow({
+  to,
+  onOpen,
+  children,
+}: {
+  to: string | null
+  onOpen?: () => void
+  children: ReactNode
+}) {
+  const navigate = useNavigate()
+  const live = !!to || !!onOpen
+  return (
+    <tr
+      className={live ? 'row-link' : undefined}
+      onClick={
+        live
+          ? (e: MouseEvent<HTMLTableRowElement>) => {
+              if ((e.target as HTMLElement).closest(INTERACTIVE)) return
+              if (window.getSelection()?.toString()) return // the user is selecting text
+              if (onOpen) onOpen()
+              else if (to) navigate(to)
+            }
+          : undefined
+      }
+    >
+      {children}
+    </tr>
+  )
 }
 
 /** One table; below 768px CSS turns each row into a glass card (primary cell as header, actions at the bottom). */
@@ -29,6 +68,8 @@ export function DataTable<T>({
   empty,
   actions,
   pageSize = 20,
+  rowTo,
+  onRowClick,
 }: Props<T>) {
   const [shown, setShown] = useState(pageSize)
   const primary = columns.find((c) => c.primary) ?? columns[0]
@@ -62,20 +103,33 @@ export function DataTable<T>({
             </tr>
           </thead>
           <tbody>
-            {visible.map((r) => (
-              <tr key={rowKey(r)}>
-                {columns.map((c) => (
-                  <td
-                    key={c.key}
-                    data-label={c.header}
-                    className={cn(c === primary && 'primary font-bold', c.className)}
-                  >
-                    {c.cell(r)}
-                  </td>
-                ))}
-                {actions && <td className="actions">{actions(r)}</td>}
-              </tr>
-            ))}
+            {visible.map((r) => {
+              const cells = (
+                <>
+                  {columns.map((c) => (
+                    <td
+                      key={c.key}
+                      data-label={c.header}
+                      className={cn(c === primary && 'primary font-bold', c.className)}
+                    >
+                      {c.cell(r)}
+                    </td>
+                  ))}
+                  {actions && <td className="actions">{actions(r)}</td>}
+                </>
+              )
+              return rowTo || onRowClick ? (
+                <ClickableRow
+                  key={rowKey(r)}
+                  to={rowTo?.(r) ?? null}
+                  onOpen={onRowClick ? () => onRowClick(r) : undefined}
+                >
+                  {cells}
+                </ClickableRow>
+              ) : (
+                <tr key={rowKey(r)}>{cells}</tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

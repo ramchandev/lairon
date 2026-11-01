@@ -192,6 +192,14 @@ export const router = createBrowserRouter([
                 ...page(() => import('@/features/users/pages/UserFormPage'), 'UserFormPage'),
               },
               {
+                path: 'reports',
+                ...h('Revenue Report'),
+                ...page(
+                  () => import('@/features/reports/pages/RevenueReportPage'),
+                  'RevenueReportPage',
+                ),
+              },
+              {
                 path: 'doctors',
                 ...h('Doctors'),
                 ...page(

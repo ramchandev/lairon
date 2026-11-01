@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   ListChecks,
   Layers,
+  IndianRupee,
   Package,
   Pill,
   Stethoscope,
@@ -22,7 +23,8 @@ import {
  * so the two cannot drift apart unnoticed.
  *
  * One deliberate change from the HTML (requested by the owner): the single "Users" link under People is replaced by separate
- * links — Drivers, Staffs, Managers, Doctors and Super Admins — each opening its own list. Everything else is as approved.
+ * links — Drivers, Staffs, Managers, Doctors and Super Admins — each opening its own list. A second change (owner's request):
+ * a "Revenue Report" link (revenue by doctor) under Overview. Everything else is as approved.
  */
 export interface AdminNavItem {
   key: string
@@ -35,7 +37,10 @@ export interface AdminNavItem {
 export const ADMIN_NAV: { group: string; items: AdminNavItem[] }[] = [
   {
     group: 'Overview',
-    items: [{ key: 'dashboard', root: '', label: 'Dashboard', icon: LayoutDashboard }],
+    items: [
+      { key: 'dashboard', root: '', label: 'Dashboard', icon: LayoutDashboard },
+      { key: 'reports', root: 'reports', label: 'Revenue Report', icon: IndianRupee },
+    ],
   },
   {
     group: 'Operations',
@@ -98,6 +103,7 @@ export const MORE_ROOTS = [
   'divisions',
   'products',
   'dropdowns',
+  'reports',
   'settings',
   'email-log',
   'profile',

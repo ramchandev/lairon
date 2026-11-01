@@ -49,31 +49,43 @@ describe('Starter pack form', () => {
     expect(screen.getAllByLabelText(/^Quantity/)).toHaveLength(1)
   })
 
-  it('offers only the selected division’s products', async () => {
+  it('each product line has its own Division, then Product, then Quantity', () => {
     setup()
-    await userEvent.click(screen.getByRole('radio', { name: 'OL' }))
+    expect(screen.getByLabelText(/^Division 1/)).toHaveValue('All Division')
+    expect(screen.getByRole('button', { name: /Product 1/ })).toBeInTheDocument()
+    expect(screen.getByLabelText(/^Quantity/)).toBeInTheDocument()
+  })
+
+  it('a line’s product list follows that line’s division', async () => {
+    setup()
+    await userEvent.selectOptions(screen.getByLabelText(/^Division 1/), 'OL')
     await userEvent.click(screen.getByRole('button', { name: /Product 1/ }))
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).getByText('Lairobon')).toBeInTheDocument()
     expect(within(dialog).queryByText('Elvion-S')).toBeNull()
   })
 
-  it('asks before clearing filled rows when the division changes', async () => {
+  it('lines are independent, and a new line starts on the division of the line above', async () => {
     setup()
-    await userEvent.click(screen.getByRole('radio', { name: 'OL' }))
-    await userEvent.type(screen.getByLabelText(/^Quantity/), '2 boxes')
-    await userEvent.click(screen.getByRole('radio', { name: 'CC' }))
-    expect(screen.getByRole('dialog', { name: 'Switch division?' })).toBeInTheDocument()
-    expect(screen.getByRole('radio', { name: 'OL' })).toHaveAttribute('aria-checked', 'true') // not switched yet
-    await userEvent.click(screen.getByRole('button', { name: 'Switch and clear' }))
-    expect(screen.getByRole('radio', { name: 'CC' })).toHaveAttribute('aria-checked', 'true')
-    expect(screen.getByLabelText(/^Quantity/)).toHaveValue('')
+    await userEvent.selectOptions(screen.getByLabelText(/^Division 1/), 'OL')
+    await userEvent.click(screen.getByRole('button', { name: /Add product/ }))
+    expect(screen.getByLabelText(/^Division 2/)).toHaveValue('OL')
+    await userEvent.selectOptions(screen.getByLabelText(/^Division 2/), 'CC')
+    expect(screen.getByLabelText(/^Division 1/)).toHaveValue('OL')
+    await userEvent.click(screen.getByRole('button', { name: /Product 2/ }))
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('Elvion-S')).toBeInTheDocument()
+    expect(within(dialog).queryByText('Lairobon')).toBeNull()
   })
 
-  it('switches without asking when nothing was entered', async () => {
+  it('changing a line’s division clears a product that does not belong to the new one', async () => {
     setup()
-    await userEvent.click(screen.getByRole('radio', { name: 'CC' }))
-    expect(screen.queryByRole('dialog', { name: 'Switch division?' })).toBeNull()
-    expect(screen.getByRole('radio', { name: 'CC' })).toHaveAttribute('aria-checked', 'true')
+    await userEvent.selectOptions(screen.getByLabelText(/^Division 1/), 'OL')
+    await userEvent.click(screen.getByRole('button', { name: /Product 1/ }))
+    await userEvent.click(within(screen.getByRole('dialog')).getByText('Lairobon'))
+    const product = () => screen.getByRole('button', { name: /Product 1/ })
+    expect(product()).toHaveTextContent('Lairobon')
+    await userEvent.selectOptions(screen.getByLabelText(/^Division 1/), 'CC')
+    expect(product()).toHaveTextContent('Select product')
   })
 })

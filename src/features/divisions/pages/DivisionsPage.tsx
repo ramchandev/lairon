@@ -76,6 +76,7 @@ export function DivisionsPage() {
         rows={data ?? []}
         columns={columns}
         rowKey={(d) => d.id}
+        rowTo={(d) => `/admin/divisions/${d.id}/edit`}
         loading={isLoading}
         empty={
           <EmptyState

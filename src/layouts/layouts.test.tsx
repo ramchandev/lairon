@@ -54,6 +54,7 @@ describe('AdminLayout', () => {
     ).toEqual([
       'LLAIRON EZAdmin portal',
       'Dashboard',
+      'Revenue Report',
       'Service Requests3',
       'Starter Packs2',
       'Trip Duty1',

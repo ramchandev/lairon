@@ -142,6 +142,7 @@ export function AdminDoctorsPage() {
         rows={rows}
         columns={columns}
         rowKey={(d) => d.id}
+        rowTo={(d) => `/admin/doctors/${d.id}`}
         loading={isLoading}
         empty={
           <EmptyState

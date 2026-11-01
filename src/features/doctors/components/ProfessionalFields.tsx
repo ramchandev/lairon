@@ -1,5 +1,7 @@
 import { Field } from '@/components/FormPage'
+import { MultiSearchSelect } from '@/components/MultiSearchSelect'
 import { SearchSelect } from '@/components/SearchSelect'
+import { joinList, splitList } from '@/lib/lists'
 import {
   divisionOptions,
   qualificationOptions,
@@ -58,14 +60,19 @@ export function ProfessionalFields({
           onChange={(qualification) => onChange({ ...value, qualification })}
         />
       </Field>
-      <Field label="Speciality" full error={errors?.speciality}>
-        <SearchSelect
+      <Field
+        label="Speciality"
+        full
+        hint="You can choose more than one."
+        error={errors?.speciality}
+      >
+        <MultiSearchSelect
           title="Speciality"
-          placeholder="Select speciality"
+          placeholder="Select one or more specialities"
           allowOther
-          value={value.speciality}
-          options={specialityOptions(data).map(opt)}
-          onChange={(speciality) => onChange({ ...value, speciality })}
+          value={splitList(value.speciality)}
+          options={specialityOptions(data)}
+          onChange={(list) => onChange({ ...value, speciality: joinList(list) })}
         />
       </Field>
     </>

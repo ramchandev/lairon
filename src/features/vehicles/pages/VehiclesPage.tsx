@@ -83,6 +83,7 @@ export function VehiclesPage() {
         rows={rows}
         columns={columns}
         rowKey={(v) => v.id}
+        rowTo={(v) => `/admin/vehicles/${v.id}/edit`}
         loading={isLoading}
         empty={
           <EmptyState

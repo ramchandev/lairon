@@ -45,6 +45,7 @@ begin
   -- another manager cannot enter revenue for Ram's service
   perform pg_temp.as_user('00000000-0000-0000-0000-0000000000c2');
   perform pg_temp.expect_error(format('select set_service_revenue(%L, %L, 1)', s, cur), 'not their request');
+  perform pg_temp.assert_eq((select count(*)::int from revenue_by_doctor(prev, cur)), 0, 'a manager gets no report rows');
   perform pg_temp.assert_eq((select count(*)::int from service_revenue), 0, 'and cannot see it');
 
   -- admin: can fix the lapsed month; doctor summary adds up the services
@@ -54,6 +55,9 @@ begin
   perform pg_temp.assert_eq((select amount from doctor_revenue_summary(d) where month = cur), 65000::numeric, 'doctor summary by month');
 
   -- Ram leaves: his work moves to Priya (one request first, then everything)
+  -- (migration 18) the report adds up a doctor's monthly figures; only admins can run it
+  perform pg_temp.assert_eq((select sum(amount) from revenue_by_doctor(prev, cur) where doctor_id = d), 42000::numeric + 65000::numeric, 'report totals the months');
+  perform pg_temp.assert_eq((select count(*)::int from revenue_by_doctor(cur, cur)), 1, 'period filter');
   perform pg_temp.assert_eq((manager_workload('00000000-0000-0000-0000-0000000000c1') ->> 'requests')::int, 1, 'workload counts requests');
   perform reassign_request(b, '00000000-0000-0000-0000-0000000000c2', 'Ram resigned');
   perform pg_temp.assert_eq((select manager_name from service_request_batches where id = b), 'Priya', 'new manager name');
