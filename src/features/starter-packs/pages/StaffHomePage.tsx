@@ -15,7 +15,7 @@ export function StaffHomePage() {
   const h = new Date().getHours()
   const greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening'
   return (
-    <div>
+    <div className="mx-auto max-w-[824px]">
       <div className="hello mb-4">
         <div>
           <p className="eyebrow">

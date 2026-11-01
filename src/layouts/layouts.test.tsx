@@ -137,4 +137,25 @@ describe('role apps', () => {
     ).toEqual(['Doctors', 'New Request2', 'My Requests', 'Profile'])
     expect(within(bar).getByLabelText('2 in draft')).toBeInTheDocument()
   })
+  it('manager on a computer gets the desktop shell (sidebar, no bottom bar)', () => {
+    const real = window.matchMedia
+    window.matchMedia = ((q: string) => ({
+      matches: q.includes('min-width: 1024px'),
+      media: q,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    })) as unknown as typeof window.matchMedia
+    try {
+      mount(<ManagerLayout />, '/m', [{ index: true, ...page('Doctors') }], '/m')
+      const side = screen.getByLabelText('Main navigation')
+      expect(
+        within(within(side).getByRole('navigation'))
+          .getAllByRole('link')
+          .map((a) => a.textContent),
+      ).toEqual(['Doctors', 'New Request2', 'My Requests', 'Profile'])
+      expect(screen.queryByRole('navigation', { name: 'Primary' })).toBeNull()
+    } finally {
+      window.matchMedia = real
+    }
+  })
 })

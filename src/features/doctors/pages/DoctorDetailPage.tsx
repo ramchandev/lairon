@@ -10,7 +10,7 @@ import { ActiveBadge, StatusBadge } from '@/components/StatusBadge'
 import { useToast } from '@/components/Toast'
 import { CallLink } from '@/features/users/components'
 import { fmtDate, inr } from '@/lib/format'
-import { DoctorRevenue } from '../components/DoctorRevenue'
+import { DoctorRevenueSummary } from '../components/DoctorRevenueSummary'
 import { useDeleteDoctor, useDoctor, useDoctorHistory } from '../api'
 import { doctorPaths } from '../paths'
 
@@ -82,7 +82,7 @@ export function DoctorDetailPage() {
         )}
       </section>
 
-      <DoctorRevenue doctorId={d.id} doctorName={d.name} />
+      <DoctorRevenueSummary doctorId={d.id} />
 
       <h2 className="sec-h">Service request history</h2>
       {history.isLoading ? (

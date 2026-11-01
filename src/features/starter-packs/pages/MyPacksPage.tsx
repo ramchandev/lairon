@@ -8,7 +8,7 @@ import { PackBadge } from '../components/PackBadge'
 export function MyPacksPage() {
   const { data, isLoading } = usePacks()
   return (
-    <div>
+    <div className="mx-auto max-w-[824px]">
       <div className="page-h">
         <div>
           <h1>My Requests</h1>

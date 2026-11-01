@@ -1,7 +1,18 @@
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
+import { HandoverFlow } from '../HandoverFlow'
 import { useAuth } from '@/app/AuthProvider'
-import { Inbox, KeyRound, LogOut, Mail, Pencil, Upload, UserCheck, UserX } from 'lucide-react'
+import {
+  ArrowRightLeft,
+  Inbox,
+  KeyRound,
+  LogOut,
+  Mail,
+  Pencil,
+  Upload,
+  UserCheck,
+  UserX,
+} from 'lucide-react'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { DataTable, type Column } from '@/components/DataTable'
 import { AddButton, Fab, IconButton, IconLink, Person, Tag } from '@/components/ListParts'
@@ -76,6 +87,7 @@ export function UsersPage({ role }: { role: ManagedRole }) {
   const [q, setQ] = useState('')
   const [status, setStatus] = useState<'all' | 'active' | 'inactive'>('all')
   const [pending, setPending] = useState<Pending | null>(null)
+  const [handover, setHandover] = useState<{ user: UserRow; thenDeactivate: boolean } | null>(null)
   const [link, setLink] = useState<string | null>(null)
 
   const rows = useMemo(
@@ -200,12 +212,23 @@ export function UsersPage({ role }: { role: ManagedRole }) {
                 onClick={() => setPending({ user: u, action: 'force_logout' })}
               />
             )}
+            {role === 'manager' && (
+              <IconButton
+                label={`Hand over ${u.full_name}’s work`}
+                icon={ArrowRightLeft}
+                onClick={() => setHandover({ user: u, thenDeactivate: false })}
+              />
+            )}
             {u.id === profile?.id ? null : u.is_active ? (
               <IconButton
                 danger
                 label={`Deactivate ${u.full_name}`}
                 icon={UserX}
-                onClick={() => setPending({ user: u, action: 'deactivate' })}
+                onClick={() =>
+                  role === 'manager'
+                    ? setHandover({ user: u, thenDeactivate: true }) // offer to hand their work over first
+                    : setPending({ user: u, action: 'deactivate' })
+                }
               />
             ) : (
               <IconButton
@@ -218,6 +241,18 @@ export function UsersPage({ role }: { role: ManagedRole }) {
         )}
       />
       <Fab to={addTo} label={addLabel} />
+
+      {handover && (
+        <HandoverFlow
+          user={handover.user}
+          thenDeactivate={handover.thenDeactivate}
+          onClose={() => setHandover(null)}
+          onDeactivate={(u) => {
+            setHandover(null)
+            setPending({ user: u, action: 'deactivate' })
+          }}
+        />
+      )}
 
       {pending && (
         <ConfirmDialog

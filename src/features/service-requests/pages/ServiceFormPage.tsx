@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
@@ -9,12 +9,6 @@ import { useToast } from '@/components/Toast'
 import { inputCls } from '@/components/form-styles'
 import { useDoctors } from '@/features/doctors/api'
 import { ProfessionalFields } from '@/features/doctors/components/ProfessionalFields'
-import { IndianRupee } from 'lucide-react'
-import { useAuth } from '@/app/AuthProvider'
-import { RevenueConfirm } from '@/features/doctors/components/RevenueConfirm'
-import { RevenueField } from '@/features/doctors/components/RevenueField'
-import { useSetRevenue } from '@/features/doctors/revenue'
-import { useRevenueField } from '@/features/doctors/useRevenueField'
 import { useLookup } from '@/features/lookups/hooks'
 import { formatPhone } from '@/lib/phone'
 import { isNetrate, isOffer, serviceSchema, type ServiceForm } from '../schemas'
@@ -78,28 +72,19 @@ function Inner({ batchId, id, existing }: { batchId: string; id?: string; existi
     handleSubmit,
     formState: { errors, isDirty },
   } = useForm<ServiceForm>({ resolver: zodResolver(serviceSchema), defaultValues: defaults })
-  const [
-    doctorId,
-    doctorName,
-    division,
-    qualification,
-    speciality,
-    offerType,
-    serviceType,
-    requestDate,
-  ] = useWatch({
-    control,
-    name: [
-      'doctor_id',
-      'doctor_name',
-      'division',
-      'qualification',
-      'speciality',
-      'offer_type',
-      'service_type',
-      'request_date',
-    ],
-  })
+  const [doctorId, doctorName, division, qualification, speciality, offerType, serviceType] =
+    useWatch({
+      control,
+      name: [
+        'doctor_id',
+        'doctor_name',
+        'division',
+        'qualification',
+        'speciality',
+        'offer_type',
+        'service_type',
+      ],
+    })
   const mark = { shouldDirty: true } as const
 
   const activeDoctors = (doctors.data ?? []).filter((d) => d.is_active || d.id === doctorId)
@@ -148,43 +133,15 @@ function Inner({ batchId, id, existing }: { batchId: string; id?: string; existi
   const offerOptions = offerTypes.data?.length
     ? offerTypes.data.map((o) => o.value)
     : ['Offer', 'Netrate']
-  // The doctor's revenue for the month of this service: typed here, saved only after a Yes/No confirmation.
-  const { profile } = useAuth()
-  const revMonth = (requestDate || '').slice(0, 7)
-  const revenue = useRevenueField(doctorId, revMonth, profile?.role)
-  const setRevenue = useSetRevenue()
-  const [pending, setPending] = useState<ServiceForm | null>(null)
-
-  const saveService = (v: ServiceForm) =>
+  const onSubmit = handleSubmit((v) =>
     save.mutate(v, {
       onSuccess: () => {
         toast(id ? 'Service updated' : 'Service added')
         navigate('/m/request', { replace: true })
       },
       onError: (e) => toast(e.message, 'error'),
-    })
-  const onSubmit = handleSubmit((v) => {
-    if (doctorId && revenue.invalid) return toast('Fix the revenue amount first', 'error')
-    if (doctorId && revenue.changed) return setPending(v) // ask before saving the revenue
-    saveService(v)
-  })
-  const confirmRevenue = () => {
-    const v = pending
-    if (!v || revenue.parsed === null) return
-    setRevenue.mutate(
-      { doctorId, month: revMonth, amount: revenue.parsed },
-      {
-        onSuccess: () => {
-          setPending(null)
-          saveService(v)
-        },
-        onError: (e) => {
-          setPending(null)
-          toast(e.message, 'error')
-        },
-      },
-    )
-  }
+    }),
+  )
 
   return (
     <FormPage
@@ -351,22 +308,6 @@ function Inner({ batchId, id, existing }: { batchId: string; id?: string; existi
           </Field>
         )}
       </Section>
-      {doctorId && (
-        <Section stack title="Doctor’s monthly revenue" icon={IndianRupee}>
-          <RevenueField month={revMonth} state={revenue} />
-        </Section>
-      )}
-      <RevenueConfirm
-        open={!!pending}
-        doctorName={doctorName}
-        month={revMonth}
-        previous={revenue.saved}
-        next={revenue.parsed ?? 0}
-        admin={profile?.role === 'admin'}
-        busy={setRevenue.isPending}
-        onConfirm={confirmRevenue}
-        onCancel={() => setPending(null)}
-      />
     </FormPage>
   )
 }

@@ -97,52 +97,54 @@ export function MyDoctorsPage() {
           />
         </div>
       ) : (
-        rows.map((d) => (
-          <section key={d.id} className="glass doc-card">
-            <Link to={`/m/doctors/${d.id}`} className="doc-main">
-              <Person
-                lead={<Avatar name={d.name} />}
-                name={
-                  <>
-                    {d.name} {!d.is_active && <StatusBadge>Inactive</StatusBadge>}
-                  </>
-                }
-                sub={[d.qualification, d.speciality].filter(Boolean).join(' · ') || undefined}
-              />
-              {d.division && <Tag>{d.division}</Tag>}
-            </Link>
-            <div className="doc-sub">
-              {d.hospital_name && (
-                <span>
-                  <Building2 aria-hidden />
-                  {d.hospital_name}
-                </span>
-              )}
-              {d.area && (
-                <span>
-                  <MapPin aria-hidden />
-                  {d.area}
-                </span>
-              )}
-              {d.phone && (
-                <span>
-                  <Phone aria-hidden />
-                  <CallLink phone={d.phone} />
-                </span>
-              )}
-            </div>
-            <div className="row-actions">
-              <Link to={`/m/request/add?doctor=${d.id}`} className="btn btn-primary btn-sm">
-                <ClipboardPlus aria-hidden /> Request service
+        <div className="lg:grid lg:grid-cols-2 lg:gap-x-3.5 xl:grid-cols-3">
+          {rows.map((d) => (
+            <section key={d.id} className="glass doc-card">
+              <Link to={`/m/doctors/${d.id}`} className="doc-main">
+                <Person
+                  lead={<Avatar name={d.name} />}
+                  name={
+                    <>
+                      {d.name} {!d.is_active && <StatusBadge>Inactive</StatusBadge>}
+                    </>
+                  }
+                  sub={[d.qualification, d.speciality].filter(Boolean).join(' · ') || undefined}
+                />
+                {d.division && <Tag>{d.division}</Tag>}
               </Link>
-              {d.manager_id === profile?.id && (
-                <Link to={`/m/doctors/${d.id}/edit`} className="btn btn-ghost btn-sm">
-                  <Pencil aria-hidden /> Edit
+              <div className="doc-sub">
+                {d.hospital_name && (
+                  <span>
+                    <Building2 aria-hidden />
+                    {d.hospital_name}
+                  </span>
+                )}
+                {d.area && (
+                  <span>
+                    <MapPin aria-hidden />
+                    {d.area}
+                  </span>
+                )}
+                {d.phone && (
+                  <span>
+                    <Phone aria-hidden />
+                    <CallLink phone={d.phone} />
+                  </span>
+                )}
+              </div>
+              <div className="row-actions">
+                <Link to={`/m/request/add?doctor=${d.id}`} className="btn btn-primary btn-sm">
+                  <ClipboardPlus aria-hidden /> Request service
                 </Link>
-              )}
-            </div>
-          </section>
-        ))
+                {d.manager_id === profile?.id && (
+                  <Link to={`/m/doctors/${d.id}/edit`} className="btn btn-ghost btn-sm">
+                    <Pencil aria-hidden /> Edit
+                  </Link>
+                )}
+              </div>
+            </section>
+          ))}
+        </div>
       )}
 
       <Fab to="/m/doctors/new" label="Add doctor" />

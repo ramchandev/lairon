@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Check, Download, FileDown, PackageCheck, X } from 'lucide-react'
+import { ArrowRightLeft, Check, Download, FileDown, PackageCheck, X } from 'lucide-react'
+import { ManagerPickDialog } from '@/components/ManagerPickDialog'
+import { useReassignRequest } from '@/features/users/handover'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { useToast } from '@/components/Toast'
 import { useBatch, useDecideBatch } from '../api'
@@ -16,6 +18,8 @@ export function AdminRequestDetailPage() {
   const decide = useDecideBatch()
   const [action, setAction] = useState<Action | null>(null)
   const [pdfBusy, setPdfBusy] = useState(false)
+  const [reassignOpen, setReassignOpen] = useState(false)
+  const reassign = useReassignRequest()
   if (isLoading) return <p className="text-muted">Loading…</p>
   if (!b) return <p className="glass p-5">Request not found.</p>
 
@@ -92,6 +96,16 @@ export function AdminRequestDetailPage() {
           <Download aria-hidden />
           <span className="hidden lg:inline">Export CSV</span>
         </button>
+        {b.status !== 'draft' && (
+          <button
+            className="btn btn-ghost shrink"
+            onClick={() => setReassignOpen(true)}
+            aria-label="Reassign to another manager"
+          >
+            <ArrowRightLeft aria-hidden />
+            <span className="hidden lg:inline">Reassign</span>
+          </button>
+        )}
         <span className="spacer" />
         {b.status === 'submitted' && (
           <>
@@ -121,6 +135,33 @@ export function AdminRequestDetailPage() {
           description={copy[action].body}
           onCancel={() => setAction(null)}
           onConfirm={run}
+        />
+      )}
+      {reassignOpen && (
+        <ManagerPickDialog
+          title={`Reassign ${b.ref_no ?? 'request'}`}
+          excludeId={b.manager_id}
+          confirmLabel="Reassign"
+          busy={reassign.isPending}
+          intro={
+            <>
+              Handled by <b>{b.manager_name ?? 'nobody'}</b>. The new manager takes over the
+              follow-up (monthly revenue) and sees the full history.
+            </>
+          }
+          onCancel={() => setReassignOpen(false)}
+          onConfirm={(toId, note) =>
+            reassign.mutate(
+              { batchId: b.id, toId, note },
+              {
+                onSuccess: () => {
+                  toast('Request reassigned')
+                  setReassignOpen(false)
+                },
+                onError: (e) => toast(e.message, 'error'),
+              },
+            )
+          }
         />
       )}
     </div>

@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { addDays, istParts, monthOf } from '@/lib/time'
+import { addDays, istParts, monthOf, shiftMonth } from '@/lib/time'
 
 export interface RevenueRow {
   id: string
-  doctor_id: string
+  service_id: string
   /** First day of the month (yyyy-mm-01). */
   month: string
   amount: number
@@ -12,38 +12,67 @@ export interface RevenueRow {
   updated_at: string
 }
 
-const KEY = ['doctor-revenue']
+const KEY = ['service-revenue']
 
-/** Every saved month for one doctor, newest first. Only admins and managers can read it. */
-export const useDoctorRevenue = (doctorId?: string) =>
+/** Saved monthly revenue for these services (a manager only receives their own requests' rows; admins all). */
+export const useServiceRevenue = (serviceIds: string[]) =>
   useQuery({
-    queryKey: [...KEY, doctorId],
-    enabled: !!doctorId,
+    queryKey: [...KEY, [...serviceIds].sort().join(',')],
+    enabled: serviceIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('doctor_revenue')
-        .select('id, doctor_id, month, amount, entered_by_name, updated_at')
-        .eq('doctor_id', doctorId!)
+        .from('service_revenue')
+        .select('id, service_id, month, amount, entered_by_name, updated_at')
+        .in('service_id', serviceIds)
         .order('month', { ascending: false })
       if (error) throw error
       return (data as RevenueRow[]).map((r) => ({ ...r, amount: Number(r.amount) }))
     },
   })
 
-/** One transaction in Postgres (`set_doctor_revenue`), which also enforces the month freeze. */
-export function useSetRevenue() {
+/** One transaction in Postgres (`set_service_revenue`), which also enforces who may enter it and the month freeze. */
+export function useSetServiceRevenue() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (v: { doctorId: string; month: string; amount: number }) => {
-      const { error } = await supabase.rpc('set_doctor_revenue', {
-        p_doctor: v.doctorId,
+    mutationFn: async (v: { serviceId: string; month: string; amount: number }) => {
+      const { error } = await supabase.rpc('set_service_revenue', {
+        p_service: v.serviceId,
         p_month: `${v.month}-01`,
         p_amount: v.amount,
       })
       if (error) throw new Error(error.message)
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: KEY }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: KEY })
+      void qc.invalidateQueries({ queryKey: ['doctor-revenue-summary'] })
+    },
   })
+}
+
+export interface DoctorRevenueMonth {
+  month: string
+  amount: number
+  services: number
+}
+/** A doctor's revenue by month: the sum over all of the doctor's services. */
+export const useDoctorRevenueSummary = (doctorId?: string) =>
+  useQuery({
+    queryKey: ['doctor-revenue-summary', doctorId],
+    enabled: !!doctorId,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('doctor_revenue_summary', { p_doctor: doctorId! })
+      if (error) throw error
+      return (data as DoctorRevenueMonth[]).map((r) => ({ ...r, amount: Number(r.amount) }))
+    },
+  })
+
+/** Months a service can carry revenue for: from the month it started up to the current month, newest first. */
+export function revenueMonths(serviceDate: string): string[] {
+  const now = monthOf(istParts().date)
+  const out: string[] = []
+  for (let m = now; m >= serviceDate.slice(0, 7) && out.length < 60; m = shiftMonth(m, -1))
+    out.push(m)
+  return out
 }
 
 export const currentMonthKey = () => monthOf(istParts().date)

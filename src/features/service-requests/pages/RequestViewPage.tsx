@@ -27,7 +27,7 @@ export function RequestViewPage() {
   }
 
   return (
-    <div>
+    <div className="mx-auto max-w-[824px]">
       <RequestBody b={b} />
       <button className="btn btn-ghost w-full" disabled={busy} onClick={pdf}>
         <FileDown aria-hidden /> {busy ? 'Preparing…' : 'Download PDF'}

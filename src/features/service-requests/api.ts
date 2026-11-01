@@ -40,6 +40,31 @@ export interface Batch {
   services: Service[]
 }
 
+export interface Handover {
+  id: string
+  from_manager_name: string | null
+  to_manager_name: string | null
+  note: string | null
+  changed_by_name: string | null
+  changed_at: string
+}
+
+/** Who handled this request before (newest first). Admins and the current manager can read it. */
+export const useHandovers = (batchId?: string) =>
+  useQuery({
+    queryKey: ['handovers', batchId],
+    enabled: !!batchId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('request_handovers')
+        .select('id, from_manager_name, to_manager_name, note, changed_by_name, changed_at')
+        .eq('batch_id', batchId!)
+        .order('changed_at', { ascending: false })
+      if (error) throw error
+      return data as Handover[]
+    },
+  })
+
 const KEY = ['batches']
 const COLS = '*, services:service_requests(*)'
 export const batchTotal = (b: Pick<Batch, 'services'>) =>

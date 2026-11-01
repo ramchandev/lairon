@@ -1,9 +1,12 @@
 import type { ReactNode } from 'react'
-import { CircleX } from 'lucide-react'
+import { ArrowRightLeft, CircleX } from 'lucide-react'
+import { useAuth } from '@/app/AuthProvider'
+import { ServiceRevenue } from '@/features/doctors/components/ServiceRevenue'
+import { useServiceRevenue } from '@/features/doctors/revenue'
 import { Avatar } from '@/components/Avatar'
 import { Person, Tag } from '@/components/ListParts'
 import { fmtDate, inr } from '@/lib/format'
-import { batchTotal, type Batch, type Service } from '../api'
+import { batchTotal, useHandovers, type Batch, type Service } from '../api'
 import { isNetrate, isOffer } from '../schemas'
 import { BatchBadge } from './BatchBadge'
 
@@ -23,6 +26,13 @@ const kv = (k: string, v: ReactNode) => (
 
 /** Summary card + one card per service, as in the prototype's request detail (admin and manager views). */
 export function RequestBody({ b }: { b: Batch }) {
+  const { profile } = useAuth()
+  const handovers = useHandovers(b.id)
+  const revenue = useServiceRevenue(b.services.map((s) => s.id))
+  // Revenue follows the request: the manager who handles it now (or an admin) enters it, once it is submitted and not rejected.
+  const canEnter =
+    ['submitted', 'approved', 'fulfilled'].includes(b.status) &&
+    (profile?.role === 'admin' || (profile?.role === 'manager' && b.manager_id === profile.id))
   const expected = b.services.reduce((a, s) => a + Number(s.expected_business_value), 0)
   return (
     <>
@@ -36,13 +46,28 @@ export function RequestBody({ b }: { b: Batch }) {
         </div>
         <dl className="meta-grid">
           {kv('Submitted', b.submitted_at ? fmtDate(b.submitted_at) : null)}
-          {kv('Doctor’s manager', b.manager_name)}
+          {kv('Manager', b.manager_name)}
           {kv('Accountability', b.accountability_staff_name)}
           {kv('Services', b.services.length)}
           {kv('Total amount', <span className="mono">{inr(batchTotal(b))}</span>)}
           {kv('Expected business', <span className="mono">{inr(expected)}</span>)}
           {b.decided_at && kv('Decided', fmtDate(b.decided_at))}
         </dl>
+        {handovers.data && handovers.data.length > 0 && (
+          <div className="note info">
+            <ArrowRightLeft size={18} className="shrink-0" />
+            <div>
+              <b>Handed over</b>
+              {handovers.data.map((h) => (
+                <div key={h.id}>
+                  {h.from_manager_name ?? '—'} → {h.to_manager_name ?? '—'} ·{' '}
+                  {fmtDate(h.changed_at)}
+                  {h.note ? ` · ${h.note}` : ''}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         {b.admin_note && (
           <div className="note">
             <CircleX size={18} className="shrink-0" />
@@ -82,6 +107,15 @@ export function RequestBody({ b }: { b: Batch }) {
             )}
             {kv('Offer / Netrate', terms(s))}
           </dl>
+          {['submitted', 'approved', 'fulfilled'].includes(b.status) && (
+            <ServiceRevenue
+              serviceId={s.id}
+              doctorName={s.doctor_name}
+              startDate={s.request_date}
+              rows={(revenue.data ?? []).filter((r) => r.service_id === s.id)}
+              canEnter={canEnter}
+            />
+          )}
         </section>
       ))}
     </>

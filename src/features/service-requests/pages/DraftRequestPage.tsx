@@ -50,7 +50,7 @@ export function DraftRequestPage() {
   const canSubmit = b.services.length > 0
 
   return (
-    <div>
+    <div className="mx-auto max-w-[824px]">
       <div className="page-h">
         <div>
           <h1>New service request</h1>

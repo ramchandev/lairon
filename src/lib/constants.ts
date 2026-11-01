@@ -4,7 +4,7 @@ export const ROLE_HOME: Record<UserRole, string> = {
   admin: '/admin',
   staff: '/staff',
   driver: '/driver',
-  manager: '/m',
+  manager: '/m/requests', // a manager lands on My Requests
 }
 
 export const TIMEZONE = 'Asia/Kolkata'

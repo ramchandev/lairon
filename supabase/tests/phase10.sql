@@ -1,5 +1,5 @@
 -- Managers are LAIRON people (migration 16): doctor phone is mandatory + unique, accountability defaults to the manager,
--- and monthly doctor revenue freezes when the month ends (admin can still change it). Rolls back.
+-- (monthly revenue moved to per-service in migration 17: see phase11). Rolls back.
 begin;
 create function pg_temp.assert_eq(a anyelement, b anyelement, l text) returns void language plpgsql as $$
 begin if a is distinct from b then raise exception 'ASSERT FAILED %: got %, expected %', l, a, b; end if; end $$;
@@ -17,9 +17,8 @@ grant all on all tables in schema public to authenticated;
 set local role authenticated;
 
 do $$
-declare d uuid; cur date := date_trunc('month', now() at time zone 'Asia/Kolkata')::date; prev date; r doctor_revenue; b uuid;
+declare d uuid; b uuid;
 begin
-  prev := (cur - interval '1 month')::date;
   perform pg_temp.as_user('00000000-0000-0000-0000-0000000000c1');
   -- phone is mandatory and unique across managers
   perform pg_temp.expect_error($q$insert into doctors (manager_id, name) values ('00000000-0000-0000-0000-0000000000c1', 'No phone')$q$, 'phone required');
@@ -35,24 +34,5 @@ begin
   b := get_or_create_draft_batch();
   perform pg_temp.assert_eq((select accountability_staff_id from service_request_batches where id = b), '00000000-0000-0000-0000-0000000000c2'::uuid, 'accountable = the manager');
 
-  -- revenue: current month editable (twice), previous month locked for a manager
-  r := set_doctor_revenue(d, cur, 50000);
-  perform pg_temp.assert_eq(r.amount, 50000::numeric, 'revenue saved');
-  r := set_doctor_revenue(d, cur + 5, 65000);  -- any day in the month maps to the month
-  perform pg_temp.assert_eq((select count(*)::int from doctor_revenue where doctor_id = d), 1, 'one row per doctor and month');
-  perform pg_temp.assert_eq((select amount from doctor_revenue where doctor_id = d and month = cur), 65000::numeric, 'edited while the month is open');
-  -- a past month with no entry can still be filled in once; after that it is frozen for managers
-  r := set_doctor_revenue(d, prev, 1000);
-  perform pg_temp.assert_eq(r.amount, 1000::numeric, 'a missing past month can be entered once');
-  perform pg_temp.expect_error(format('select set_doctor_revenue(%L, %L, 2000)', d, prev), 'a past month with an entry is locked for a manager');
-  perform pg_temp.expect_error(format('select set_doctor_revenue(%L, %L, -5)', d, cur), 'negative amount');
-  perform pg_temp.expect_error($q$insert into doctor_revenue (doctor_id, month, amount) values ((select id from doctors limit 1), date_trunc('month', now())::date, 1)$q$, 'no direct writes');
-
-  -- admin can still fix a past month
-  reset role; perform pg_temp.as_user('00000000-0000-0000-0000-0000000000a1'); set local role authenticated;
-  r := set_doctor_revenue(d, prev, 42000);
-  perform pg_temp.assert_eq(r.amount, 42000::numeric, 'admin can set a lapsed month');
-  r := set_doctor_revenue(d, prev, 43000);
-  perform pg_temp.assert_eq(r.amount, 43000::numeric, 'and edit it');
 end $$;
 rollback;
