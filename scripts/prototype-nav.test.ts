@@ -44,6 +44,7 @@ describe('admin navigation matches the approved HTML', () => {
     { r: 'managers', label: 'Managers', icon: 'briefcase-medical' },
     { r: 'doctors', label: 'Doctors', icon: 'stethoscope' },
     { r: 'super-admins', label: 'Super Admins', icon: 'shield-check' },
+    { r: 'stockists', label: 'Stockists', icon: 'store' },
   ]
   // The other: a Reports section with the Revenue Report link (revenue by doctor), after Operations.
   const REPORTS = {
@@ -54,8 +55,9 @@ describe('admin navigation matches the approved HTML', () => {
       { r: 'field-activity', label: 'Field Activity', icon: 'footprints' },
       { r: 'roi', label: 'ROI Report', icon: 'percent' },
       { r: 'doctor-plans', label: 'Doctor Plans', icon: 'target' },
-      { r: 'stockists', label: 'Stockists', icon: 'store' },
       { r: 'appraisal', label: 'Appraisal', icon: 'award' },
+      { r: 'sale-report', label: 'Sale Report', icon: 'file-spreadsheet' },
+      { r: 'sale-upload', label: 'Sale Upload', icon: 'file-up' },
     ],
   }
   const protoNav = rawNav

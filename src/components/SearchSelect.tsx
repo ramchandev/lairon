@@ -22,6 +22,8 @@ interface Props {
   allowOther?: boolean
   /** Note shown in the picker, e.g. "Filtered by division". */
   note?: string
+  /** Accessible name of the field button (when there is no visible label to point at). */
+  ariaLabel?: string
 }
 
 const SEARCH_THRESHOLD = 5
@@ -36,6 +38,7 @@ export function SearchSelect({
   disabled,
   allowOther,
   note,
+  ariaLabel,
 }: Props) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
@@ -69,6 +72,7 @@ export function SearchSelect({
         disabled={disabled}
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
+        aria-label={ariaLabel}
         className={cn(
           inputCls,
           'flex min-h-12 items-center justify-between gap-2 text-left',

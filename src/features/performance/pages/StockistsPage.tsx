@@ -11,6 +11,7 @@ import { currentMonthKey, revenueLocked } from '@/features/doctors/revenue'
 import { useLocations, useManagerLocations } from '@/features/locations/api'
 import { monthLabel, shiftMonth } from '@/lib/time'
 import { financialYear } from '../sales'
+import { StockistDetailsTab } from './StockistDetailsTab'
 import {
   VALUE_KEYS,
   useAddStockist,
@@ -49,7 +50,7 @@ export function StockistsPage() {
   )
   const [locationId, setLocationId] = useState('')
   const place = places.find((l) => l.id === locationId) ?? places[0]
-  const [tab, setTab] = useState<'entry' | 'year'>('entry')
+  const [tab, setTab] = useState<'details' | 'entry' | 'year'>(isAdmin ? 'details' : 'entry')
 
   return (
     <>
@@ -63,23 +64,26 @@ export function StockistsPage() {
         </p>
       ) : (
         <>
-          <div className="toolbar">
-            <div className="chips" role="group" aria-label="Location">
-              {places.map((l) => (
-                <button
-                  key={l.id}
-                  type="button"
-                  className="chip"
-                  aria-pressed={l.id === place?.id}
-                  onClick={() => setLocationId(l.id)}
-                >
-                  {l.name}
-                </button>
-              ))}
+          {tab !== 'details' && (
+            <div className="toolbar">
+              <div className="chips" role="group" aria-label="Location">
+                {places.map((l) => (
+                  <button
+                    key={l.id}
+                    type="button"
+                    className="chip"
+                    aria-pressed={l.id === place?.id}
+                    onClick={() => setLocationId(l.id)}
+                  >
+                    {l.name}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
           <Tabs
             tabs={[
+              ...(isAdmin ? [{ key: 'details' as const, label: 'Details' }] : []),
               { key: 'entry', label: 'Monthly entry' },
               { key: 'year', label: 'Year view' },
             ]}
@@ -87,7 +91,9 @@ export function StockistsPage() {
             onChange={setTab}
           />
           <div className="mt-4">
-            {place &&
+            {tab === 'details' && <StockistDetailsTab />}
+            {tab !== 'details' &&
+              place &&
               (tab === 'entry' ? (
                 <Entry locationId={place.id} locationName={place.name} admin={isAdmin} />
               ) : (

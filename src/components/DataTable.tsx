@@ -93,7 +93,9 @@ export function DataTable<T>({
           <thead>
             <tr>
               {columns.map((c) => (
-                <th key={c.key}>{c.header}</th>
+                <th key={c.key} className={c.className}>
+                  {c.header}
+                </th>
               ))}
               {actions && (
                 <th>

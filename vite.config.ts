@@ -19,7 +19,7 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         // The PDF and Excel libraries are big and rarely used: don't make every first install download them.
         // They are cached the first time someone uses PDF export / import.
-        globIgnores: ['**/react-pdf*.js', '**/xlsx*.js'],
+        globIgnores: ['**/react-pdf*.js', '**/xlsx*.js', '**/pdf.worker*.mjs'],
         runtimeCaching: [
           {
             urlPattern: ({ url }: { url: URL }) =>

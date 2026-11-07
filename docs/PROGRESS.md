@@ -267,3 +267,40 @@ Source: the RBM workbook (G.JEEVABALAN-RBM.xlsx). Agreed scoring/plan notes for 
 ## Test-only gate (performance modules)
 
 Sales Performance, Field Activity, ROI Report, Doctor Plans, Stockists and Appraisal (admin side) are visible and reachable only to `ramchandev@gmail.com` while being tested (`preview` flag + `PREVIEW_EMAIL` in `src/layouts/adminNav.ts`; nav, More tiles and a redirect in `AdminLayout`). Other admins see no links and are redirected from those URLs. Managers keep all their performance screens. To release: remove the `preview: true` flags.
+
+## Sale Report — release A: foundation + Excel import (test-gated like the other performance modules)
+
+- Migration `20261018000024_sale_report.sql`: `import_fields` (seeded headings + synonyms; admin can add more), `stockist_import_templates`, `product_aliases`, `stockist_uploads` (one live upload per stockist + division + month; replaced ones kept as history), `stockist_sales_lines`, `sale_report_settings` (cover months etc., for the reports release). Admin-only; writes go through `commit_stockist_upload` / `delete_stockist_upload`. SQL test `phase18.sql`.
+- `/admin/sale-report` (Reports group, `preview` flag → only ramchandev@gmail.com): tabs **Upload | Uploaded | Headings**.
+- Upload: choose many .xls/.xlsx files; each is read in the browser (SheetJS), the header row (one- or two-row) is detected, headings are mapped to fields by synonym/fuzzy match, the period/division/stockist are guessed, products are matched by name (exact → ≥90% auto → 70–90% suggested for confirmation → none), and the admin confirms before saving. The stockist's column layout and product spellings are remembered; corrected headings become synonyms.
+- Files with no sales/stock columns (e.g. bill-wise reports) are refused with a clear message. PDFs are read in release B (below).
+- Code: `src/features/sale-report/` — `parse/{period,statement,sheet}.ts`, `match/products.ts`, `fields.ts`, `api.ts`, `commit.ts`, `pages/`. Harness: `SALES_DIR=<folder> npx vitest run scripts/sale-harness` (set `HARNESS_OUT` for a report file).
+- Checked on the 15 Excel files in the sample folder: headings, period and division read on all; stock equation holds on all rows for 8 files, the rest differ only by stockist adjustments (shown as a warning).
+- Not stored: the original file (only figures + hash). Next: release B (PDF), release C (reports + presets + cover-month setting).
+
+## Sale Report — release B: PDF import
+
+- `/admin/sale-report` → Upload now accepts **.pdf** as well. `pdfjs-dist` (loaded only when a PDF is chosen, worker served from the same origin so the CSP `worker-src 'self'` still holds) gives every text piece with its position; `parse/pdf.ts` rebuilds the table from the layout: words → lines, product lines = [serial] + name + figures, total/summary/note lines dropped, figure columns found by their aligned edges, heading words (even multi-line or "group" headings like *Sales* over *Qty / Free*) assigned to those columns. The result is the same row grid as Excel, so mapping, product matching, period/division guess and saving are unchanged.
+- A PDF with no sales/stock columns (e.g. the bill-wise Saraswathi REPL) is refused with the same clear message.
+- Checked on the 52 sample PDFs: about 40 read fully (core fields mapped, stock equation holds); the others (Vaccine Park, Qvax, Sree Amman, Shree Meenakshi, Firstmed, Mirudhu and a few glued-heading layouts) read the products and figures but may need a column re-pointed in the mapping table — the admin can do that, and the layout is then remembered for that stockist. Stock-equation mismatches stay warnings.
+- Tests: `parse/pdf.test.ts` (synthetic page, totals excluded, no-sales refusal), UploadTab PDF flow. Harness: `HARNESS_OUT=<file> SALES_DIR=<folder> npx vitest run scripts/sale-pdf-harness`.
+
+## Sale Report — release C: reports
+
+- `/admin/sale-report` now opens on a **Reports** tab (Reports | Upload | Uploaded | Headings). Eleven report chips are the presets: **What to order** (all stockists, per product), **Order by stockist**, **Monthly consolidation**, **Top products** (with change vs last month), **Top stockists**, **Stocked, not selling**, **Month-on-month** (6 months), **By division**, **By location**, **Scheme & returns**, **Upload status** (who sent / who is missing).
+- Filters: month (months that have statements), location, division, stockist. **Saved views** (report + filters) reuse `report_presets` per admin. **Export CSV** of the table on screen.
+- Numbers: sales = paid qty; free and returns shown apart. ₹ = qty × our PTS, else the stockist's own value/rate. Reorder suggestion = average monthly sales (last N months with a statement) × cover months − closing stock, rounded up. "Not selling" = closing stock lasting longer than the slow-cover months, or no sales. **Reorder settings** (cover 1.5, history 3, slow 3 by default) are edited on the same tab and stored in `sale_report_settings` (no new migration).
+- Code: `reports.ts` (pure calculations, `reports.test.ts`), `useSaleLines`/`useSaleSettings` in `api.ts` (lines read in pages of 1000), `pages/ReportsTab.tsx`.
+- Not done: rolling the totals into the managers' Stockists page (`stockist_entries`) — a later option.
+
+## Sale Report — rework after first look
+
+- **Two screens:** *Sale Report* (reports only) and *Sale Upload* (Reports group; both still test-gated). Sale Upload opens on a **month list** (uploads and stockists per month, plus "Open month" for a new one); inside a month: **Uploaded** and **New upload**. If a sheet's period is another month than the one opened, it asks: upload for the sheet's month / keep this month / skip.
+- **Headings** screen is a tab on Sale Upload shown only to ramchandev@gmail.com (any admin can still add a heading while mapping columns in an upload).
+- **Reports:** the 11 predefined reports are one drop-down (with a one-line hint each); month, location, division, stockist and saved views are searchable pickers. Table headers now align with their figures (`DataTable` applies a column's class to its header).
+- **Searchable pickers** (`SearchSelect`, wrapped as `sale-report/Pick`) replace every drop-down on the Sale Report/Upload screens: stockist, division, column meaning, product, location. Rule for the rest of the system to follow later.
+- **Product step:** rows stay where they are after you assign one; a ✓ "Assigned" marks manual choices.
+- **New stockist from a sheet** is pre-filled with the name found in the sheet (or the file name).
+- **Stockists moved to People** (still test-gated) with a **Details** tab: name, location, contact person, phone, email, GSTIN, drug licence, address, notes, active — add and edit. Migration `20261018000025_stockist_details.sql` adds the columns (read via a separate query, so other screens keep working until it is applied). Monthly entry / Year view stay as the other tabs.
+- **Product matching, less work for the admin:** 80%+ similar names are accepted automatically and **listed as "Auto-matched (n%)"** so they can be re-adjusted; 50–80% are asked as **Yes / No / Skip**; below 50% go to the searchable list (with **Skip this if the medicine is not matching**). The importer **learns**: a chosen product is remembered for that stockist *and* for everyone (a stockist's own spelling overrides the general one), and automatic matches left as they were are remembered for that stockist — so the same spelling is not asked again. Wrong memories can be removed on the Headings screen.
+

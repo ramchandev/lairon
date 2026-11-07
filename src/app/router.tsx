@@ -232,6 +232,22 @@ export const router = createBrowserRouter([
                 ),
               },
               {
+                path: 'sale-report',
+                ...h('Sale Report'),
+                ...page(
+                  () => import('@/features/sale-report/pages/SaleReportPage'),
+                  'SaleReportPage',
+                ),
+              },
+              {
+                path: 'sale-upload',
+                ...h('Sale Upload'),
+                ...page(
+                  () => import('@/features/sale-report/pages/SaleUploadPage'),
+                  'SaleUploadPage',
+                ),
+              },
+              {
                 path: 'appraisal',
                 ...h('Appraisal'),
                 ...page(

@@ -163,6 +163,20 @@ export function MorePage() {
       tone: 'violet',
     },
     {
+      key: 'sale-report',
+      root: 'sale-report',
+      label: 'Sale Report',
+      sub: 'Stockist reports',
+      tone: 'teal',
+    },
+    {
+      key: 'sale-upload',
+      root: 'sale-upload',
+      label: 'Sale Upload',
+      sub: 'Monthly statements',
+      tone: 'info',
+    },
+    {
       key: 'locations',
       root: 'locations',
       label: 'Locations',

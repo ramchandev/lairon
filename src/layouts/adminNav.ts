@@ -15,6 +15,8 @@ import {
   Percent,
   Store,
   Award,
+  FileSpreadsheet,
+  FileUp,
   Target,
   Package,
   Pill,
@@ -31,7 +33,7 @@ import {
  *
  * One deliberate change from the HTML (requested by the owner): the single "Users" link under People is replaced by separate
  * links — Drivers, Staffs, Managers, Doctors and Super Admins — each opening its own list. A second change (owner's request):
- * a "Locations" master (Masters) and a "Reports" section holding the "Revenue Report" (revenue by doctor) and "Sales Performance" (manager sales) "Field Activity" (manager calls, coverage, tour plan), "ROI Report" and "Doctor Plans" (conversion, core coverage) "Stockists" and "Appraisal" (admin-only manager scoring) links. Everything else is as approved.
+ * a "Locations" master (Masters) and a "Reports" section holding the "Revenue Report" (revenue by doctor) and "Sales Performance" (manager sales) "Field Activity" (manager calls, coverage, tour plan), "ROI Report" and "Doctor Plans" (conversion, core coverage) "Stockists" and "Appraisal" (admin-only manager scoring) "Sale Report" and "Sale Upload" (stockist statements); "Stockists" sits under People. Everything else is as approved.
  */
 export interface AdminNavItem {
   key: string
@@ -94,8 +96,21 @@ export const ADMIN_NAV: { group: string; items: AdminNavItem[] }[] = [
         icon: Target,
         preview: true,
       },
-      { key: 'stockists', root: 'stockists', label: 'Stockists', icon: Store, preview: true },
       { key: 'appraisal', root: 'appraisal', label: 'Appraisal', icon: Award, preview: true },
+      {
+        key: 'sale-report',
+        root: 'sale-report',
+        label: 'Sale Report',
+        icon: FileSpreadsheet,
+        preview: true,
+      },
+      {
+        key: 'sale-upload',
+        root: 'sale-upload',
+        label: 'Sale Upload',
+        icon: FileUp,
+        preview: true,
+      },
     ],
   },
   {
@@ -106,6 +121,7 @@ export const ADMIN_NAV: { group: string; items: AdminNavItem[] }[] = [
       { key: 'managers', root: 'managers', label: 'Managers', icon: BriefcaseMedical },
       { key: 'doctors', root: 'doctors', label: 'Doctors', icon: Stethoscope },
       { key: 'super-admins', root: 'super-admins', label: 'Super Admins', icon: ShieldCheck },
+      { key: 'stockists', root: 'stockists', label: 'Stockists', icon: Store, preview: true },
     ],
   },
   {
@@ -148,6 +164,8 @@ export const MORE_ROOTS = [
   'doctor-plans',
   'stockists',
   'appraisal',
+  'sale-report',
+  'sale-upload',
   'settings',
   'email-log',
   'profile',

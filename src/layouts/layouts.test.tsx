@@ -92,6 +92,8 @@ describe('AdminLayout', () => {
           'Doctor Plans',
           'Stockists',
           'Appraisal',
+          'Sale Report',
+          'Sale Upload',
         ]),
       )
     } finally {

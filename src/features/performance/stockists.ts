@@ -99,3 +99,65 @@ export function useSaveStockistEntry() {
     onSuccess: () => void qc.invalidateQueries({ queryKey: ['stockist-entries'] }),
   })
 }
+
+/* ---------- master details (admin) ---------- */
+
+export interface StockistDetails extends Stockist {
+  contact_person: string | null
+  phone: string | null
+  email: string | null
+  address: string | null
+  gstin: string | null
+  drug_licence: string | null
+  notes: string | null
+}
+export type StockistForm = Omit<StockistDetails, 'id'>
+
+/** Read separately from `useStockists` so the lists everyone uses keep working before the details columns exist. */
+export const useStockistDetails = () =>
+  useQuery({
+    queryKey: ['stockist-details'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stockists')
+        .select(
+          'id, name, location_id, is_active, contact_person, phone, email, address, gstin, drug_licence, notes',
+        )
+        .order('name')
+      if (error) throw error
+      return data as StockistDetails[]
+    },
+  })
+
+const blank = (s: string | null) => (s?.trim() ? s.trim() : null)
+
+export function useSaveStockistDetails(id?: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (f: StockistForm) => {
+      const row = {
+        name: f.name.trim(),
+        location_id: f.location_id,
+        is_active: f.is_active,
+        contact_person: blank(f.contact_person),
+        phone: blank(f.phone),
+        email: blank(f.email),
+        address: blank(f.address),
+        gstin: blank(f.gstin)?.toUpperCase() ?? null,
+        drug_licence: blank(f.drug_licence),
+        notes: blank(f.notes),
+      }
+      const { error } = id
+        ? await supabase.from('stockists').update(row).eq('id', id)
+        : await supabase.from('stockists').insert(row)
+      if (error)
+        throw new Error(
+          error.code === '23505' ? 'This stockist is already in this location.' : error.message,
+        )
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['stockist-details'] })
+      void qc.invalidateQueries({ queryKey: ['stockists'] })
+    },
+  })
+}
