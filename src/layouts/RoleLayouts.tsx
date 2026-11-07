@@ -1,7 +1,7 @@
 import { useDraftBatch } from '@/features/service-requests/api'
 import { MobileLayout } from './MobileLayout'
 import { ResponsiveRoleLayout } from './ResponsiveRoleLayout'
-import { DRIVER_TABS, MANAGER_TABS, STAFF_TABS } from './roleNav'
+import { DRIVER_TABS, MANAGER_PERFORMANCE_TABS, MANAGER_TABS, STAFF_TABS } from './roleNav'
 
 export const DriverLayout = () => (
   <MobileLayout roleLabel="Driver" profilePath="/driver/profile" tabs={DRIVER_TABS} />
@@ -19,6 +19,7 @@ export function ManagerLayout() {
     <ResponsiveRoleLayout
       roleLabel="Manager"
       profilePath="/m/profile"
+      desktopTabs={MANAGER_PERFORMANCE_TABS}
       tabs={MANAGER_TABS.map((t) => (t.to === '/m/request' ? { ...t, badge: n } : t))}
     />
   )

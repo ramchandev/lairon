@@ -6,7 +6,7 @@ import { useAuth } from '@/app/AuthProvider'
 import { Avatar } from '@/components/Avatar'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { ghostSm } from '@/components/form-styles'
-import { ADMIN_NAV, adminHref } from '@/layouts/adminNav'
+import { ADMIN_NAV, adminHref, navFor } from '@/layouts/adminNav'
 import { supabase } from '@/lib/supabase'
 
 const count = async (table: string) => {
@@ -53,6 +53,9 @@ export function MorePage() {
   const c = useMoreCounts().data
   const [confirm, setConfirm] = useState(false)
   const items = ADMIN_NAV.flatMap((g) => g.items)
+  const shown = navFor(profile?.email)
+    .flatMap((g) => g.items)
+    .map((i) => i.root)
   const icon = (key: string) => items.find((i) => i.key === key)!.icon
   const tiles: {
     key: string
@@ -118,6 +121,55 @@ export function MorePage() {
       tone: 'danger',
     },
     {
+      key: 'performance',
+      root: 'performance',
+      label: 'Sales Performance',
+      sub: 'Manager sales',
+      tone: 'info',
+    },
+    {
+      key: 'field-activity',
+      root: 'field-activity',
+      label: 'Field Activity',
+      sub: 'Calls and coverage',
+      tone: 'teal',
+    },
+    {
+      key: 'roi',
+      root: 'roi',
+      label: 'ROI Report',
+      sub: 'Return on services',
+      tone: 'ok',
+    },
+    {
+      key: 'doctor-plans',
+      root: 'doctor-plans',
+      label: 'Doctor Plans',
+      sub: 'Conversion and coverage',
+      tone: 'violet',
+    },
+    {
+      key: 'stockists',
+      root: 'stockists',
+      label: 'Stockists',
+      sub: 'Sales, closing, returns',
+      tone: 'warn',
+    },
+    {
+      key: 'appraisal',
+      root: 'appraisal',
+      label: 'Appraisal',
+      sub: 'Manager scoring',
+      tone: 'violet',
+    },
+    {
+      key: 'locations',
+      root: 'locations',
+      label: 'Locations',
+      sub: 'Where managers work',
+      tone: 'teal',
+    },
+    {
       key: 'reports',
       root: 'reports',
       label: 'Revenue Report',
@@ -145,25 +197,27 @@ export function MorePage() {
         </button>
       </section>
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        {tiles.map((t) => {
-          const Icon = icon(t.key)
-          return (
-            <Link
-              key={t.key}
-              to={adminHref(t.root)}
-              className="glass flex flex-col gap-3 border border-[rgba(255,255,255,.78)] p-4 no-underline"
-            >
-              <span className={`grid size-[42px] place-items-center rounded-xl ${TONE[t.tone]}`}>
-                <Icon className="size-5" strokeWidth={1.9} />
-              </span>
-              <div>
-                <b className="text-[15px]">{t.label}</b>
-                <br />
-                <span className="text-[13px] text-muted">{t.sub}</span>
-              </div>
-            </Link>
-          )
-        })}
+        {tiles
+          .filter((t) => shown.includes(t.root) || !items.find((i) => i.key === t.key)?.preview)
+          .map((t) => {
+            const Icon = icon(t.key)
+            return (
+              <Link
+                key={t.key}
+                to={adminHref(t.root)}
+                className="glass flex flex-col gap-3 border border-[rgba(255,255,255,.78)] p-4 no-underline"
+              >
+                <span className={`grid size-[42px] place-items-center rounded-xl ${TONE[t.tone]}`}>
+                  <Icon className="size-5" strokeWidth={1.9} />
+                </span>
+                <div>
+                  <b className="text-[15px]">{t.label}</b>
+                  <br />
+                  <span className="text-[13px] text-muted">{t.sub}</span>
+                </div>
+              </Link>
+            )
+          })}
         {/* Not in the approved HTML: the two admin pages added after it was designed. Reachable here and from the sidebar user block. */}
         <Link
           to="/admin/settings"

@@ -2,7 +2,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Field, FormPage, Section } from '@/components/FormPage'
-import { Check, Pill, ShieldCheck } from 'lucide-react'
+import { Check, Pill, ShieldCheck, TrendingUp } from 'lucide-react'
 import { SwitchRow } from '@/components/Switch'
 import { useToast } from '@/components/Toast'
 import { inputCls } from '@/components/form-styles'
@@ -27,9 +27,20 @@ export function ProductFormPage() {
               name: p.name,
               description: p.description ?? '',
               division_ids: p.division_ids,
+              tag: p.tag ?? '',
+              pts: p.pts === null ? '' : String(p.pts),
+              kdp_group: p.kdp_group ?? '',
               is_active: p.is_active,
             }
-          : { name: '', description: '', division_ids: [], is_active: true }
+          : {
+              name: '',
+              description: '',
+              division_ids: [],
+              tag: '',
+              pts: '',
+              kdp_group: '',
+              is_active: true,
+            }
       }
     />
   )
@@ -110,6 +121,59 @@ function Inner({
               </div>
             )}
           />
+        </Field>
+      </Section>
+      <Section title="Performance" icon={TrendingUp}>
+        <Field
+          label="Product type"
+          group
+          full
+          hint="Core products are the KDP products in the appraisal. New products are the ones being launched."
+        >
+          <Controller
+            control={control}
+            name="tag"
+            render={({ field }) => (
+              <div className="chips" role="group" aria-label="Product type">
+                {(
+                  [
+                    ['', 'Neither'],
+                    ['core', 'Core (KDP)'],
+                    ['new', 'New'],
+                  ] as const
+                ).map(([k, label]) => (
+                  <button
+                    key={k}
+                    type="button"
+                    className="chip"
+                    aria-pressed={field.value === k}
+                    onClick={() => field.onChange(k)}
+                  >
+                    {field.value === k && <Check aria-hidden />}
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          />
+        </Field>
+        <Field
+          label="PTS (₹ per unit)"
+          error={errors.pts?.message}
+          hint="Price to stockist. Turns units into value in the sales reports."
+        >
+          <input
+            className={inputCls}
+            inputMode="decimal"
+            placeholder="e.g. 115.45"
+            {...register('pts')}
+          />
+        </Field>
+        <Field
+          label="KDP group"
+          hint="Only for core products: variants with the same group are scored together, e.g. LAIROBON."
+        >
+          <input className={inputCls} placeholder="e.g. LAIROBON" {...register('kdp_group')} />
         </Field>
       </Section>
       <Section title="Availability" icon={ShieldCheck}>

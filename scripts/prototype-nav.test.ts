@@ -48,17 +48,44 @@ describe('admin navigation matches the approved HTML', () => {
   // The other: a Reports section with the Revenue Report link (revenue by doctor), after Operations.
   const REPORTS = {
     group: 'Reports',
-    items: [{ r: 'reports', label: 'Revenue Report', icon: 'indian-rupee' }],
+    items: [
+      { r: 'reports', label: 'Revenue Report', icon: 'indian-rupee' },
+      { r: 'performance', label: 'Sales Performance', icon: 'chart-column' },
+      { r: 'field-activity', label: 'Field Activity', icon: 'footprints' },
+      { r: 'roi', label: 'ROI Report', icon: 'percent' },
+      { r: 'doctor-plans', label: 'Doctor Plans', icon: 'target' },
+      { r: 'stockists', label: 'Stockists', icon: 'store' },
+      { r: 'appraisal', label: 'Appraisal', icon: 'award' },
+    ],
   }
   const protoNav = rawNav
     .map((g) => (g.group === 'People' ? { ...g, items: PEOPLE } : g))
     .flatMap((g) => (g.group === 'Operations' ? [g, REPORTS] : [g]))
+    // And a Locations master (where managers work) after Divisions.
+    .map((g) =>
+      g.group === 'Masters'
+        ? {
+            ...g,
+            items: g.items.flatMap((i) =>
+              i.r === 'divisions'
+                ? [i, { r: 'locations', label: 'Locations', icon: 'map-pin' }]
+                : [i],
+            ),
+          }
+        : g,
+    )
   const protoBottom = evalArray<ProtoItem[]>(block('BOTTOM'))
   const protoMore = evalArray<string[]>(block('MORE_ROOTS'))
 
   it('has the same groups, in the same order', () => {
     expect(ADMIN_NAV.map((g) => g.group)).toEqual(protoNav.map((g) => g.group))
-    expect(ADMIN_NAV.map((g) => g.group)).toEqual(['Overview', 'Operations', 'Reports', 'People', 'Masters'])
+    expect(ADMIN_NAV.map((g) => g.group)).toEqual([
+      'Overview',
+      'Operations',
+      'Reports',
+      'People',
+      'Masters',
+    ])
   })
 
   it('has the same items in each group: label, order and icon', () => {

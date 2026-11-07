@@ -21,6 +21,7 @@ import { PageHeader } from '@/components/FormPage'
 import { ChipFilter, SearchInput } from '@/components/ListControls'
 import { ActiveBadge } from '@/components/StatusBadge'
 import { useToast } from '@/components/Toast'
+import { useLocations, useManagerLocations } from '@/features/locations/api'
 import { useUserAction, useUsers, type UserRow } from '../api'
 import { Avatar, CallLink, visibleEmail } from '../components'
 import { ROLE_META, ROLE_PATH, roleListUrl, type ManagedRole } from '../schemas'
@@ -83,6 +84,8 @@ export function UsersPage({ role }: { role: ManagedRole }) {
   const { profile } = useAuth()
   const { data, isLoading } = useUsers(role)
   const act = useUserAction()
+  const locations = useLocations()
+  const managerLocs = useManagerLocations()
   const toast = useToast()
   const [q, setQ] = useState('')
   const [status, setStatus] = useState<'all' | 'active' | 'inactive'>('all')
@@ -120,7 +123,19 @@ export function UsersPage({ role }: { role: ManagedRole }) {
     { key: 'phone', header: 'Phone', cell: (u) => <CallLink phone={u.phone} /> },
     ...(meta.hasArea ? [{ key: 'area', header: 'Area', cell: (u: UserRow) => u.area || '—' }] : []),
     ...(role === 'manager'
-      ? [{ key: 'hq', header: 'HQ', cell: (u: UserRow) => (u.hq ? <Tag>{u.hq}</Tag> : '—') }]
+      ? [
+          { key: 'hq', header: 'HQ', cell: (u: UserRow) => (u.hq ? <Tag>{u.hq}</Tag> : '—') },
+          {
+            key: 'locations',
+            header: 'Locations',
+            cell: (u: UserRow) => {
+              const codes = (managerLocs.data?.[u.id] ?? [])
+                .map((id) => locations.data?.find((l) => l.id === id)?.code)
+                .filter(Boolean)
+              return codes.length ? codes.join(' · ') : <span className="text-warn">None</span>
+            },
+          },
+        ]
       : []),
     { key: 'status', header: 'Status', cell: (u) => <ActiveBadge active={u.is_active} /> },
   ]

@@ -5,9 +5,10 @@ import { ChromeProvider, type RouteHandle } from './chrome'
 import { AdminLayout } from './AdminLayout'
 import { DriverLayout, ManagerLayout } from './RoleLayouts'
 
+const who = vi.hoisted(() => ({ email: 'admin@lairon.in' }))
 vi.mock('@/app/AuthProvider', () => ({
   useAuth: () => ({
-    profile: { full_name: 'Admin User', email: 'admin@lairon.in', avatar_url: null, role: 'admin' },
+    profile: { full_name: 'Admin User', email: who.email, avatar_url: null, role: 'admin' },
     signOut: vi.fn(),
   }),
 }))
@@ -65,6 +66,7 @@ describe('AdminLayout', () => {
       'Super Admins',
       'Vehicles',
       'Divisions',
+      'Locations',
       'Products',
       'Dropdowns',
       'Admin Useradmin@lairon.in',
@@ -73,6 +75,39 @@ describe('AdminLayout', () => {
       'aria-current',
       'page',
     )
+  })
+
+  it('shows the performance modules only to the one preview account', () => {
+    who.email = 'Ramchandev@gmail.com'
+    try {
+      mount(<AdminLayout />, '/admin', adminRoutes, '/admin')
+      const links = within(screen.getByLabelText('Main navigation'))
+        .getAllByRole('link', { hidden: true })
+        .map((a) => a.textContent)
+      expect(links).toEqual(
+        expect.arrayContaining([
+          'Sales Performance',
+          'Field Activity',
+          'ROI Report',
+          'Doctor Plans',
+          'Stockists',
+          'Appraisal',
+        ]),
+      )
+    } finally {
+      who.email = 'admin@lairon.in'
+    }
+  })
+
+  it('sends any other admin away from a preview page', () => {
+    mount(
+      <AdminLayout />,
+      '/admin',
+      [...adminRoutes, { path: 'appraisal', ...page('Appraisal') }],
+      '/admin/appraisal',
+    )
+    expect(screen.queryByText('Appraisal body')).toBeNull()
+    expect(screen.getByText('Dashboard body')).toBeInTheDocument()
   })
 
   it('has a 5-tab bottom bar and marks "More" active on the pages it leads to', () => {
@@ -153,7 +188,19 @@ describe('role apps', () => {
         within(within(side).getByRole('navigation'))
           .getAllByRole('link')
           .map((a) => a.textContent),
-      ).toEqual(['Doctors', 'New Request2', 'My Requests', 'Profile'])
+      ).toEqual([
+        'Doctors',
+        'New Request2',
+        'My Requests',
+        'Sales Entry',
+        'Sales Report',
+        'Daily Log',
+        'Field Activity',
+        'ROI',
+        'Doctor Plans',
+        'Stockists',
+        'Profile',
+      ])
       expect(screen.queryByRole('navigation', { name: 'Primary' })).toBeNull()
     } finally {
       window.matchMedia = real

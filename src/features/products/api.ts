@@ -7,6 +7,12 @@ export interface Product {
   name: string
   description: string | null
   is_active: boolean
+  /** Core (a KDP product) or New; null for neither. */
+  tag: 'core' | 'new' | null
+  /** Price to stockist, used to turn units into value. */
+  pts: number | null
+  /** Groups variants of one brand for the appraisal (e.g. LAIROBON). */
+  kdp_group: string | null
   division_ids: string[]
 }
 const KEY = ['products']
@@ -17,7 +23,9 @@ export const useProducts = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('id, name, description, is_active, product_divisions(division_id)')
+        .select(
+          'id, name, description, is_active, tag, pts, kdp_group, product_divisions(division_id)',
+        )
         .order('name')
       if (error) throw error
       return (
@@ -26,6 +34,7 @@ export const useProducts = () =>
         })[]
       ).map(({ product_divisions, ...p }) => ({
         ...p,
+        pts: p.pts === null ? null : Number(p.pts),
         division_ids: product_divisions.map((d) => d.division_id),
       })) as Product[]
     },
@@ -52,6 +61,9 @@ export function useSaveProduct(id?: string) {
         name: v.name.trim(),
         description: v.description.trim() || null,
         is_active: v.is_active,
+        tag: v.tag || null,
+        pts: v.pts ? Number(v.pts) : null,
+        kdp_group: v.kdp_group.trim() || null,
       }
       let productId = id
       if (id) {

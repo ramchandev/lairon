@@ -13,6 +13,8 @@ interface Props {
   roleLabel: string
   profilePath: string
   tabs: TabItem[]
+  /** Extra sidebar entries shown on a computer only. */
+  desktopTabs?: TabItem[]
 }
 
 /**
@@ -20,7 +22,17 @@ interface Props {
  * desktop shell (sidebar, breadcrumb, full-width pages — the same look as the admin portal) on a computer.
  */
 export function ResponsiveRoleLayout(props: Props) {
-  return useIsDesktop() ? <DesktopRoleShell {...props} /> : <MobileLayout {...props} />
+  const { desktopTabs, ...phone } = props
+  return useIsDesktop() ? (
+    <DesktopRoleShell
+      {...props}
+      tabs={props.tabs.flatMap((t) =>
+        t.to === props.profilePath ? [...(desktopTabs ?? []), t] : [t],
+      )}
+    />
+  ) : (
+    <MobileLayout {...phone} />
+  )
 }
 
 function DesktopRoleShell({ roleLabel, profilePath, tabs }: Props) {

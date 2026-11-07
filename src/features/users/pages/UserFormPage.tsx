@@ -4,7 +4,7 @@ import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
-import { Copy, Eye, EyeOff, FileText, UserRound, Wand2 } from 'lucide-react'
+import { Check, Copy, Eye, EyeOff, FileText, MapPin, UserRound, Wand2 } from 'lucide-react'
 import { generatePassword } from '@/lib/password'
 import { loginInfoText } from '../loginInfo'
 import { Field, FormPage, Section } from '@/components/FormPage'
@@ -13,6 +13,7 @@ import { useToast } from '@/components/Toast'
 import { saveAvatar } from '@/lib/avatar'
 import { inputCls } from '@/components/form-styles'
 import { useLookup } from '@/features/lookups/hooks'
+import { useLocations, useManagerLocations, useSetManagerLocations } from '@/features/locations/api'
 import { formatPhone } from '@/lib/phone'
 import { useCreateUser, useUpdateUser, useUser } from '../api'
 import { visibleEmail } from '../components'
@@ -74,6 +75,14 @@ function Inner({
   const navigate = useNavigate()
   const toast = useToast()
   const hqs = useLookup('hq')
+  const locations = useLocations()
+  const managerLocs = useManagerLocations()
+  const setLocs = useSetManagerLocations()
+  const savedLocs = (id && managerLocs.data?.[id]) || []
+  // null = untouched (show what is saved); an array = the admin's edit
+  const [pickedLocs, setPickedLocs] = useState<string[] | null>(null)
+  const locIds = pickedLocs ?? savedLocs
+  const locsChanged = pickedLocs !== null
   const create = useCreateUser(role)
   const update = useUpdateUser(id ?? '', role, currentEmail)
   const [link, setLink] = useState<string | null>(null)
@@ -109,11 +118,22 @@ function Inner({
     }
   }
 
+  // Locations are saved after the profile itself (managers only); a failure only warns, the manager is already saved.
+  async function saveLocations(userId: string) {
+    if (role !== 'manager' || !locsChanged) return
+    try {
+      await setLocs.mutateAsync({ managerId: userId, locationIds: locIds })
+    } catch {
+      toast('Saved, but the locations could not be updated', 'error')
+    }
+  }
+
   const onSubmit = handleSubmit((v) => {
     if (id) {
       update.mutate(v, {
         onSuccess: async () => {
           await savePhoto(id)
+          await saveLocations(id)
           toast('User updated')
           back()
         },
@@ -123,6 +143,7 @@ function Inner({
       create.mutate(v, {
         onSuccess: async (r) => {
           await savePhoto(r.id)
+          await saveLocations(r.id)
           if (r.invite_link) setLink(r.invite_link)
           else {
             toast(
@@ -142,7 +163,7 @@ function Inner({
     <FormPage
       title={id ? `Edit ${meta.label.toLowerCase()}` : `Add ${meta.label.toLowerCase()}`}
       saveLabel={id ? 'Save changes' : `Save ${meta.label.toLowerCase()}`}
-      dirty={(isDirty || photoChanged) && !link}
+      dirty={(isDirty || photoChanged || locsChanged) && !link}
       saving={create.isPending || update.isPending}
       onSubmit={onSubmit}
     >
@@ -290,6 +311,38 @@ function Inner({
           </Field>
         )}
       </Section>
+      {role === 'manager' && (
+        <Section title="Locations covered" icon={MapPin}>
+          <Field
+            label="Locations"
+            group
+            full
+            hint="Only an admin can assign these. The manager enters sales and sees reports for these locations only."
+          >
+            <div className="chips" role="group" aria-label="Locations covered">
+              {(locations.data ?? [])
+                .filter((l) => l.is_active || locIds.includes(l.id))
+                .map((l) => {
+                  const on = locIds.includes(l.id)
+                  return (
+                    <button
+                      key={l.id}
+                      type="button"
+                      className="chip"
+                      aria-pressed={on}
+                      onClick={() =>
+                        setPickedLocs(on ? locIds.filter((x) => x !== l.id) : [...locIds, l.id])
+                      }
+                    >
+                      {on && <Check aria-hidden />}
+                      {l.name} ({l.code})
+                    </button>
+                  )
+                })}
+            </div>
+          </Field>
+        </Section>
+      )}
       {meta.hasBio && (
         <Section title="About" icon={FileText}>
           <Field label="Bio" full error={errors.bio?.message}>

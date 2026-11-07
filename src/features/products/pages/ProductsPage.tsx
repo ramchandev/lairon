@@ -61,6 +61,11 @@ export function ProductsPage() {
       header: 'Divisions',
       cell: (p) => <Tags items={p.division_ids.map((id) => divName.get(id) ?? '?')} />,
     },
+    {
+      key: 'tag',
+      header: 'Type',
+      cell: (p) => (p.tag ? <Tags items={[p.tag === 'core' ? 'Core (KDP)' : 'New']} /> : '—'),
+    },
     { key: 'active', header: 'Status', cell: (p) => <ActiveBadge active={p.is_active} /> },
   ]
 

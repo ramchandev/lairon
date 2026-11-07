@@ -23,6 +23,7 @@ export const doctorSchema = z.object({
   hospital_name: z.string().trim(),
   pharmacy_name: z.string().trim(),
   hq: z.string().trim(),
+  location_id: z.string(),
   notes: z.string().trim().max(1000, 'Keep notes under 1000 characters'),
   manager_id: z.string(),
   is_active: z.boolean(),

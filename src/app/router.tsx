@@ -200,6 +200,70 @@ export const router = createBrowserRouter([
                 ),
               },
               {
+                path: 'performance',
+                ...h('Sales Performance'),
+                ...page(
+                  () => import('@/features/performance/pages/SalesReportPage'),
+                  'AdminSalesReportPage',
+                ),
+              },
+              {
+                path: 'field-activity',
+                ...h('Field Activity'),
+                ...page(
+                  () => import('@/features/performance/pages/FieldActivityPage'),
+                  'AdminFieldActivityPage',
+                ),
+              },
+              {
+                path: 'field-activity/daily',
+                ...h('Daily Log'),
+                ...page(
+                  () => import('@/features/performance/pages/DailyLogPage'),
+                  'AdminDailyLogPage',
+                ),
+              },
+              {
+                path: 'roi',
+                ...h('ROI Report'),
+                ...page(
+                  () => import('@/features/performance/pages/RoiReportPage'),
+                  'AdminRoiReportPage',
+                ),
+              },
+              {
+                path: 'appraisal',
+                ...h('Appraisal'),
+                ...page(
+                  () => import('@/features/performance/pages/AppraisalPage'),
+                  'AppraisalPage',
+                ),
+              },
+              {
+                path: 'doctor-plans',
+                ...h('Doctor Plans'),
+                ...page(
+                  () => import('@/features/performance/pages/DoctorPlansPage'),
+                  'AdminDoctorPlansPage',
+                ),
+              },
+              {
+                path: 'stockists',
+                ...h('Stockists'),
+                ...page(
+                  () => import('@/features/performance/pages/StockistsPage'),
+                  'StockistsPage',
+                ),
+              },
+              {
+                path: 'performance/entry',
+                ...h('Sales Entry'),
+                ...page(
+                  () => import('@/features/performance/pages/SalesEntryPage'),
+                  'AdminSalesEntryPage',
+                ),
+              },
+              {
                 path: 'doctors',
                 ...h('Doctors'),
                 ...page(
@@ -244,6 +308,27 @@ export const router = createBrowserRouter([
                 ...page(
                   () => import('@/features/vehicles/pages/VehicleFormPage'),
                   'VehicleFormPage',
+                ),
+              },
+              {
+                path: 'locations',
+                ...h('Locations'),
+                ...page(() => import('@/features/locations/pages/LocationsPage'), 'LocationsPage'),
+              },
+              {
+                path: 'locations/new',
+                ...sub('Add Location', '/admin/locations'),
+                ...page(
+                  () => import('@/features/locations/pages/LocationFormPage'),
+                  'LocationFormPage',
+                ),
+              },
+              {
+                path: 'locations/:id/edit',
+                ...sub('Edit Location', '/admin/locations'),
+                ...page(
+                  () => import('@/features/locations/pages/LocationFormPage'),
+                  'LocationFormPage',
                 ),
               },
               {
@@ -447,6 +532,59 @@ export const router = createBrowserRouter([
                 index: true,
                 ...h('Doctors'),
                 ...page(() => import('@/features/doctors/pages/MyDoctorsPage'), 'MyDoctorsPage'),
+              },
+              {
+                path: 'performance/sales',
+                ...h('Sales Entry'),
+                ...page(
+                  () => import('@/features/performance/pages/SalesEntryPage'),
+                  'SalesEntryPage',
+                ),
+              },
+              {
+                path: 'performance/daily',
+                ...h('Daily Log'),
+                ...page(() => import('@/features/performance/pages/DailyLogPage'), 'DailyLogPage'),
+              },
+              {
+                path: 'performance/activity',
+                ...h('Field Activity'),
+                ...page(
+                  () => import('@/features/performance/pages/FieldActivityPage'),
+                  'FieldActivityPage',
+                ),
+              },
+              {
+                path: 'performance/roi',
+                ...h('ROI'),
+                ...page(
+                  () => import('@/features/performance/pages/RoiReportPage'),
+                  'RoiReportPage',
+                ),
+              },
+              {
+                path: 'performance/plans',
+                ...h('Doctor Plans'),
+                ...page(
+                  () => import('@/features/performance/pages/DoctorPlansPage'),
+                  'DoctorPlansPage',
+                ),
+              },
+              {
+                path: 'performance/stockists',
+                ...h('Stockists'),
+                ...page(
+                  () => import('@/features/performance/pages/StockistsPage'),
+                  'StockistsPage',
+                ),
+              },
+              {
+                path: 'performance/report',
+                ...h('Sales Report'),
+                ...page(
+                  () => import('@/features/performance/pages/SalesReportPage'),
+                  'SalesReportPage',
+                ),
               },
               {
                 path: 'doctors/new',

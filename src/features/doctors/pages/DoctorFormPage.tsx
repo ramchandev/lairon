@@ -9,6 +9,7 @@ import { SwitchRow } from '@/components/Switch'
 import { useToast } from '@/components/Toast'
 import { inputCls } from '@/components/form-styles'
 import { useLookup } from '@/features/lookups/hooks'
+import { useLocations } from '@/features/locations/api'
 import { useUsers } from '@/features/users/api'
 import { formatPhone } from '@/lib/phone'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
@@ -41,6 +42,7 @@ export function DoctorFormPage() {
     hospital_name: d?.hospital_name ?? '',
     pharmacy_name: d?.pharmacy_name ?? '',
     hq: d?.hq ?? '',
+    location_id: d?.location_id ?? '',
     notes: d?.notes ?? '',
     manager_id: d?.manager_id ?? (profile.role === 'manager' ? profile.id : ''),
     is_active: d?.is_active ?? true,
@@ -56,6 +58,7 @@ function Inner({ id, defaults }: { id?: string; defaults: DoctorForm }) {
   const toast = useToast()
   const save = useSaveDoctor(id)
   const hqs = useLookup('hq')
+  const locations = useLocations()
   const managers = useUsers('manager')
   const {
     register,
@@ -179,6 +182,18 @@ function Inner({ id, defaults }: { id?: string; defaults: DoctorForm }) {
                 {h.value}
               </option>
             ))}
+          </select>
+        </Field>
+        <Field label="Location" hint="Groups this doctor’s ROI and coverage by place.">
+          <select className={inputCls} {...register('location_id')}>
+            <option value="">Select location</option>
+            {locations.data
+              ?.filter((l) => l.is_active || l.id === defaults.location_id)
+              .map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name}
+                </option>
+              ))}
           </select>
         </Field>
         <Field label="Email" error={errors.email?.message}>

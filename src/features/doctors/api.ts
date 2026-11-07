@@ -17,12 +17,14 @@ export interface Doctor {
   hospital_name: string | null
   pharmacy_name: string | null
   hq: string | null
+  /** The location (e.g. Madurai) used to group ROI and coverage. */
+  location_id: string | null
   notes: string | null
   is_active: boolean
 }
 const KEY = ['doctors']
 const COLS =
-  'id, manager_id, name, phone, email, qualification, speciality, division, area, hospital_name, pharmacy_name, hq, notes, is_active, manager:manager_id(full_name)'
+  'id, manager_id, name, phone, email, qualification, speciality, division, area, hospital_name, pharmacy_name, hq, location_id, notes, is_active, manager:manager_id(full_name)'
 
 type Raw = Omit<Doctor, 'manager_name'> & { manager: { full_name: string } | null }
 const flat = ({ manager, ...d }: Raw): Doctor => ({
@@ -119,6 +121,7 @@ export function useSaveDoctor(id?: string) {
         hospital_name: nul(v.hospital_name),
         pharmacy_name: nul(v.pharmacy_name),
         hq: nul(v.hq),
+        location_id: nul(v.location_id),
         notes: nul(v.notes),
         manager_id: v.manager_id,
         is_active: v.is_active,

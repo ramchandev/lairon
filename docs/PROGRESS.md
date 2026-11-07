@@ -221,3 +221,49 @@ The portal's navigation now matches `design/lairon-ez-prototype.html` (pixel-com
 - **Starter packs:** each product line has its own Division → Product → Quantity. Migration `20261018000018` adds `starter_pack_items.division` (backfilled from the pack) and updates `create_starter_pack` / `import_starter_packs`; the pack-level division is the joined set of line divisions. PDF, CSV export, summary and import follow.
 - **Revenue Report** (admin, `/admin/reports`, in its own Reports section): revenue by doctor per month for the last 3/6/12 months, KPI tiles, search, CSV export, row → doctor. Backed by the admin-only `revenue_by_doctor(p_from, p_to)` RPC. A deliberate addition to the approved nav (documented in `adminNav.ts` and the nav guard test).
 - **Follow-up:** Revenue Report moved into its own **Reports** section in the admin nav and the KPI tiles now share the full width; the **Staff directory** is removed from the Staff app (staff no longer see each other); login-info text is the same for every role ("Your LAIRON EZ account is ready. Sign in with these details:").
+
+## Manager performance — release 1 (locations, product tags, sales entry, reports)
+Source: the RBM workbook (G.JEEVABALAN-RBM.xlsx). Agreed scoring/plan notes for the next releases: appraisal = Total Sales 35 + Core/KDP products 35 (split per KDP group) + Activity 16 (Coverage 10, New customers 3, CME 3) + New products 10 + ROI 4; **not capped at 100**; one admin-managed setup for all managers; ROI = a doctor's cumulative return ÷ cumulative service amount ≥ 4×, credited to the manager handling the request; past months lock for managers (admin can edit); managers save their own report views; counts (calls, coverage) are calculated from daily entries and can be edited.
+- **Locations** master (Madurai / Nagercoil / Tirunelveli seeded; admin → Masters → Locations). **Only an admin assigns a manager's locations** (Managers → Edit → "Locations covered"; the list shows them).
+- **Products** gain a type (**Core = KDP**, New), **PTS** (price per unit, turns units into value) and a **KDP group** (variants of one brand scored together in the appraisal).
+- **Sales Entry** (manager, on a computer; admin can enter for any manager): pick a location and month, add products, enter Primary/Secondary target, Primary/Secondary achieved and Sales return; "Copy products from last month". An ended month locks once a product has an entry (admin can still change it).
+- **Sales Report** (manager: own; admin → Reports → Sales Performance: any manager or all): filters for location, Core/New, units or value (₹ lakhs), by product / month / location, any month range; Ach %, Secondary vs Primary %, Gap, Sales return, Net; CSV export; **saved views** per person.
+- Database: migration **19** (`locations`, `manager_locations`, `products.tag/pts/kdp_group`, `sales_entries`, `save_sales_entry()`, `report_presets`); SQL suite `phase13`. Apply 18 first, then 19.
+- Later releases (agreed): field activity + daily doctors met + TP deviation, ROI / conversion plan / new converted doctors / core coverage, stockists, appraisal setup and report (admin only).
+
+## Manager performance — release 2 (daily log, tour plan, field activity)
+- **Daily Log** (manager on a computer; admin for any manager): pick a day → day type (field / meeting / week off / holiday / leave), location, **TP planned vs Actual** (the **deviation** is worked out and can be changed; reason + prior approval when it is Yes), chemist calls, and the **doctors met** (pick a doctor or type one; planned-met / missed / met-not-planned, camp / CME / other, activity name, amount, planned/done, discussion points, instructions). A month-at-a-glance table below shows the TP-deviation view; click a day to open it. A future day takes the tour plan only.
+- **Field Activity** (RBM_Activities rows 21–39): every figure is **calculated from the daily log** — working days, holidays, leave, days worked, meeting days, Dr calls and average, chemist calls and average, MCL Drs met, missed calls, 3/2/1-visit doctors (met 3+ / twice / once in the month), camps, CMEs — and **any number can be typed over**. POB and the MCL size are typed in; coverage % = MCL met ÷ MCL size. "All locations" or a single location (a single location shows the calculated numbers).
+- Past months lock for managers: a day (or a month's figures) that has a saved record can't be changed after its month ends; one that has none can still be filled in once. Admin can always edit.
+- Database: migration **20** (`daily_logs`, `daily_doctor_calls`, `monthly_activity`, `save_day_entry()`, `save_monthly_activity()`); SQL suite `phase14`. Apply 19 first, then 20.
+- Next (agreed): ROI / conversion plan / new converted doctors / core coverage, stockists, appraisal setup and report (admin only).
+
+## Manager performance — release 3 (ROI, conversion plan, core coverage)
+- **ROI** (manager: own; admin → Reports → ROI Report: any manager or all). Calculated, not typed: a doctor's **cumulative return ÷ cumulative service amount** (the service amount on the request; the return is the monthly revenue recorded on it), credited to the manager handling the request. **Achieved at 4× or more.** Monthly or quarterly columns for the financial year, an "as of" month, location filter, doctors-at-4× count per month (this is what the appraisal ROI score will read), CSV export.
+- **Doctor Plans** (manager; admin for any manager):
+  - **Conversion Plan** — per month: doctor (from the directory or typed), hospital, speciality, visits, visited date, POB, activities, remarks, and **Converted on**.
+  - **New Converted Drs** — doctors with a "Converted on" date this financial year, with their ROI (from their requests' service amount and revenue).
+  - **Core Dr Coverage** — a list of core doctors; each month type the name of who visited under MR / ABM / RBM / ZSM / SH (names for now); coverage % = core doctors visited ÷ core doctors.
+- **Doctors now have a Location** (doctor form) so ROI and coverage group by place.
+- Conversion plan and core coverage are living lists (no month lock); the month lock applies to sales, daily log and monthly activity.
+- Database: migration **21** (`doctors.location_id`, `conversion_plans`, `core_doctors`, `core_coverage`, RLS: a manager keeps their own, admin sees all); SQL suite `phase15`. Apply 20 first, then 21.
+- Next (agreed): stockists, then the appraisal setup and report (admin only).
+
+## Manager performance — release 4 (stockists)
+- **Stockists** (manager on a computer, only for the locations they cover; admin → Reports → Stockists, all locations). Stockists are **added by hand** and belong to a location (one name per location); a stockist can be removed from the list without losing past values. Per month enter **Sales value, Closing value and Return value (₹ lakhs)**; a **Year view** shows any of the three by month across the financial year. Past months lock once a stockist has values (admin can change). A separate Stockist database can replace the manual list later.
+- Database: migration **22** (`stockists`, `stockist_entries`, `save_stockist_entry()`; a manager sees and edits only their locations' stockists); SQL suite `phase16`. Apply 21 first, then 22.
+- Next (agreed): the appraisal — admin setup of points/targets/ratings and the appraisal report (admin only).
+
+## Release 5 — Appraisal (admin only)
+
+- Migration `20261018000023_appraisal.sql`: `appraisal_settings` (one row, admin-only RLS) with the default setup. SQL test `phase17.sql`.
+- `/admin/appraisal` (Reports group; tabs **Report | Setup**). Managers never see it; the table returns nothing to them.
+- **Setup** (one for all managers): points (default 35 sales + 35 core/KDP + 10 coverage + 3 new customers + 3 CME + 10 new products + 4 ROI = 100), targets, sales basis (primary/secondary), rating bands (≥100 Outstanding, 95–99 Good, 92–95 Satisfactory, below Below par). The total-points line warns if it is not 100.
+- **Report**: pick a manager and financial year; per-month score with rating, month detail (target / achieved / % / points / out of), average over months with data, CSV export.
+- Scoring: each part = achieved ÷ target × its points, **not capped**. Core points are split equally between KDP groups (a product's KDP group, else its name). Total sales = units × PTS. Coverage, CMEs from Field Activity (edits included); new customers = doctors converted that month; ROI = doctors at 4× that month ÷ target.
+- Assumptions to confirm: coverage target 100%; ROI target 3 doctors a month; sales counted on primary.
+- Logic and tests: `src/features/performance/appraisal.ts`, `appraisal.test.ts`, `AppraisalPage.test.tsx`.
+
+## Test-only gate (performance modules)
+
+Sales Performance, Field Activity, ROI Report, Doctor Plans, Stockists and Appraisal (admin side) are visible and reachable only to `ramchandev@gmail.com` while being tested (`preview` flag + `PREVIEW_EMAIL` in `src/layouts/adminNav.ts`; nav, More tiles and a redirect in `AdminLayout`). Other admins see no links and are redirected from those URLs. Managers keep all their performance screens. To release: remove the `preview: true` flags.

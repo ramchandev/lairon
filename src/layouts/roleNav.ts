@@ -1,4 +1,11 @@
 import {
+  ChartColumn,
+  TrendingUp,
+  NotebookPen,
+  Footprints,
+  Percent,
+  Store,
+  Target,
   CalendarDays,
   ClipboardList,
   ClipboardPlus,
@@ -20,6 +27,17 @@ export const MANAGER_TABS = [
   { to: '/m/request', label: 'New Request', icon: ClipboardPlus },
   { to: '/m/requests', label: 'My Requests', icon: ClipboardList },
   { to: '/m/profile', label: 'Profile', icon: UserRound },
+]
+
+/** Added to the manager's sidebar on a computer only (the phone bar keeps the approved four tabs). */
+export const MANAGER_PERFORMANCE_TABS = [
+  { to: '/m/performance/sales', label: 'Sales Entry', icon: TrendingUp },
+  { to: '/m/performance/report', label: 'Sales Report', icon: ChartColumn },
+  { to: '/m/performance/daily', label: 'Daily Log', icon: NotebookPen },
+  { to: '/m/performance/activity', label: 'Field Activity', icon: Footprints },
+  { to: '/m/performance/roi', label: 'ROI', icon: Percent },
+  { to: '/m/performance/plans', label: 'Doctor Plans', icon: Target },
+  { to: '/m/performance/stockists', label: 'Stockists', icon: Store },
 ]
 
 /** Staff has no screens in the approved HTML yet (plan §8); it follows the same role-app pattern. */

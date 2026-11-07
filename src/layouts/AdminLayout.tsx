@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Link, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { Bell, ChevronRight, LogOut } from 'lucide-react'
 import { useAuth } from '@/app/AuthProvider'
 import { Avatar } from '@/components/Avatar'
@@ -7,7 +7,15 @@ import { ConfirmDialog } from '@/components/ConfirmDialog'
 import { useToast } from '@/components/Toast'
 import { useDashboard } from '@/features/dashboard/api'
 import { cn } from '@/lib/utils'
-import { ADMIN_BOTTOM, ADMIN_NAV, MORE_ROOTS, adminHref, adminRoot } from './adminNav'
+import {
+  ADMIN_BOTTOM,
+  MORE_ROOTS,
+  adminHref,
+  adminRoot,
+  canPreview,
+  navFor,
+  previewRoots,
+} from './adminNav'
 import { BottomNav, Brand, TopBar, iconBtn, useRouteChrome } from './chrome'
 
 /**
@@ -24,13 +32,14 @@ export function AdminLayout() {
   const [confirmOut, setConfirmOut] = useState(false)
 
   const root = adminRoot(pathname, search)
+  const nav = navFor(profile?.email)
   const counts = {
     requests: kpi?.pending_service_requests ?? 0,
     starter: kpi?.pending_starter_packs ?? 0,
     leave: kpi?.pending_leave_requests ?? 0,
   }
   const name = profile?.full_name ?? 'Admin'
-  const navLabel = ADMIN_NAV.flatMap((g) => g.items).find((i) => i.root === root)?.label ?? title
+  const navLabel = nav.flatMap((g) => g.items).find((i) => i.root === root)?.label ?? title
 
   function notify() {
     const parts = [
@@ -47,6 +56,9 @@ export function AdminLayout() {
     )
   }
 
+  if (previewRoots.includes(root) && !canPreview(profile?.email))
+    return <Navigate to="/admin" replace />
+
   return (
     <div className="flex min-h-screen">
       <aside
@@ -54,7 +66,7 @@ export function AdminLayout() {
         className="sticky top-0 hidden h-screen w-[268px] shrink-0 flex-col overflow-y-auto border-r border-line bg-white/[.42] px-3.5 py-[18px] backdrop-blur-[18px] backdrop-saturate-[140%] lg:flex"
       >
         <Brand to="/admin" subtitle="Admin portal" className="px-2.5 pt-1 pb-[18px]" />
-        {ADMIN_NAV.map((g) => (
+        {nav.map((g) => (
           <div key={g.group} className="mt-3.5">
             <h6 className="px-3 pb-1.5 text-[11.5px] font-bold tracking-[.08em] text-muted uppercase">
               {g.group}
