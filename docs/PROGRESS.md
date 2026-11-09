@@ -304,3 +304,9 @@ Sales Performance, Field Activity, ROI Report, Doctor Plans, Stockists and Appra
 - **Stockists moved to People** (still test-gated) with a **Details** tab: name, location, contact person, phone, email, GSTIN, drug licence, address, notes, active — add and edit. Migration `20261018000025_stockist_details.sql` adds the columns (read via a separate query, so other screens keep working until it is applied). Monthly entry / Year view stay as the other tabs.
 - **Product matching, less work for the admin:** 80%+ similar names are accepted automatically and **listed as "Auto-matched (n%)"** so they can be re-adjusted; 50–80% are asked as **Yes / No / Skip**; below 50% go to the searchable list (with **Skip this if the medicine is not matching**). The importer **learns**: a chosen product is remembered for that stockist *and* for everyone (a stockist's own spelling overrides the general one), and automatic matches left as they were are remembered for that stockist — so the same spelling is not asked again. Wrong memories can be removed on the Headings screen.
 
+## Release: Sale Report, Sale Upload, Stockists for every super admin
+
+- The `preview` flag is removed from **Sale Report**, **Sale Upload** and **Stockists** (People) in `src/layouts/adminNav.ts`; all super admins now see and can open them. Sales Performance, Field Activity, ROI Report, Doctor Plans and Appraisal remain test-only for ramchandev@gmail.com.
+- The **Headings** tab on Sale Upload is still shown only to ramchandev@gmail.com (any admin can add a heading while mapping columns).
+- Needs migrations 24 and 25 applied in Supabase before the new pages work.
+
