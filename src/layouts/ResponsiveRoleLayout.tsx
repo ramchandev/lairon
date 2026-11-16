@@ -53,26 +53,33 @@ function DesktopRoleShell({ roleLabel, profilePath, tabs }: Props) {
       >
         <Brand to={tabs[0].to} subtitle={roleLabel} className="px-2.5 pt-1 pb-[18px]" />
         <nav className="mt-2">
-          {tabs.map((t) => {
+          {tabs.map((t, i) => {
             const on = isOn(t)
+            const heading = t.group && t.group !== tabs[i - 1]?.group ? t.group : null
             return (
-              <Link
-                key={t.to}
-                to={t.to}
-                aria-current={on ? 'page' : undefined}
-                className={cn(
-                  'flex h-11 items-center gap-3 rounded-xl px-3 text-[14.5px] font-semibold text-ink-2 no-underline hover:bg-white/60',
-                  on && 'bg-white text-primary shadow-[0_2px_10px_rgba(30,50,90,.07)]',
+              <div key={t.to} className={heading && i > 0 ? 'mt-3.5' : undefined}>
+                {heading && (
+                  <h6 className="px-3 pb-1.5 text-[11.5px] font-bold tracking-[.08em] text-muted uppercase">
+                    {heading}
+                  </h6>
                 )}
-              >
-                <t.icon className="size-5 shrink-0" strokeWidth={1.9} />
-                <span>{t.label}</span>
-                {t.badge ? (
-                  <span className="ml-auto rounded-full bg-primary px-2 py-px text-xs font-bold text-white tabular">
-                    {t.badge}
-                  </span>
-                ) : null}
-              </Link>
+                <Link
+                  to={t.to}
+                  aria-current={on ? 'page' : undefined}
+                  className={cn(
+                    'flex h-11 items-center gap-3 rounded-xl px-3 text-[14.5px] font-semibold text-ink-2 no-underline hover:bg-white/60',
+                    on && 'bg-white text-primary shadow-[0_2px_10px_rgba(30,50,90,.07)]',
+                  )}
+                >
+                  <t.icon className="size-5 shrink-0" strokeWidth={1.9} />
+                  <span>{t.label}</span>
+                  {t.badge ? (
+                    <span className="ml-auto rounded-full bg-primary px-2 py-px text-xs font-bold text-white tabular">
+                      {t.badge}
+                    </span>
+                  ) : null}
+                </Link>
+              </div>
             )
           })}
         </nav>

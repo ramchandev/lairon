@@ -19,8 +19,11 @@ export function ManagerLayout() {
     <ResponsiveRoleLayout
       roleLabel="Manager"
       profilePath="/m/profile"
-      desktopTabs={MANAGER_PERFORMANCE_TABS}
-      tabs={MANAGER_TABS.map((t) => (t.to === '/m/request' ? { ...t, badge: n } : t))}
+      desktopTabs={MANAGER_PERFORMANCE_TABS.map((t) => ({ ...t, group: 'Performance' }))}
+      tabs={MANAGER_TABS.map((t) => {
+        const group = t.to === '/m' ? 'Doctors' : t.to === '/m/profile' ? 'Account' : 'Requests'
+        return t.to === '/m/request' ? { ...t, group, badge: n } : { ...t, group }
+      })}
     />
   )
 }

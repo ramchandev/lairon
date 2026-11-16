@@ -1,18 +1,34 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Building2, ClipboardPlus, Inbox, MapPin, Pencil, UserPlus } from 'lucide-react'
+import {
+  Building2,
+  ClipboardPlus,
+  Download,
+  Eye,
+  Inbox,
+  MapPin,
+  Pencil,
+  UserPlus,
+} from 'lucide-react'
 import { useAuth } from '@/app/AuthProvider'
 import { Avatar } from '@/components/Avatar'
+import { DataTable, type Column } from '@/components/DataTable'
 import { EmptyState } from '@/components/EmptyState'
 import { ChipFilter, SearchInput } from '@/components/ListControls'
-import { Fab, Person, Tag } from '@/components/ListParts'
-import { StatusBadge } from '@/components/StatusBadge'
+import { Fab, IconLink, Person, Tag } from '@/components/ListParts'
+import { ActiveBadge, StatusBadge } from '@/components/StatusBadge'
 import { CallLink } from '@/features/users/components'
-import { useDoctors } from '../api'
+import { downloadCsv } from '@/lib/csvExport'
+import { useIsDesktop } from '@/lib/useMediaQuery'
+import { useDoctors, type Doctor } from '../api'
 
-/** Manager home: every doctor in the directory as cards (managers see all; they edit only the ones they added). */
+/**
+ * Manager home: every doctor in the directory (managers see all; they edit only the ones they added).
+ * Phone: cards. Computer: a searchable table like the admin's, with the request / edit actions on each row.
+ */
 export function MyDoctorsPage() {
   const { profile } = useAuth()
+  const desktop = useIsDesktop()
   const { data, isLoading } = useDoctors()
   const [scope, setScope] = useState<'all' | 'mine'>('all')
   const [q, setQ] = useState('')
@@ -31,6 +47,36 @@ export function MyDoctorsPage() {
   )
   const n = data?.length ?? 0
 
+  const columns: Column<Doctor>[] = [
+    {
+      key: 'name',
+      header: 'Doctor',
+      primary: true,
+      cell: (d) => <Person lead={<Avatar name={d.name} />} name={d.name} sub={d.speciality} />,
+    },
+    { key: 'qual', header: 'Qualification', cell: (d) => d.qualification || '—' },
+    { key: 'div', header: 'Division', cell: (d) => (d.division ? <Tag>{d.division}</Tag> : '—') },
+    { key: 'hospital', header: 'Hospital', cell: (d) => d.hospital_name || '—' },
+    { key: 'area', header: 'Area', cell: (d) => d.area || '—' },
+    { key: 'phone', header: 'Phone', cell: (d) => (d.phone ? <CallLink phone={d.phone} /> : '—') },
+    { key: 'status', header: 'Status', cell: (d) => <ActiveBadge active={d.is_active} /> },
+  ]
+  const exportCsv = () =>
+    downloadCsv(
+      `doctors-${new Date().toISOString().slice(0, 10)}.csv`,
+      ['Doctor', 'Phone', 'Division', 'Qualification', 'Speciality', 'Hospital', 'Area', 'Status'],
+      rows.map((d) => [
+        d.name,
+        d.phone,
+        d.division,
+        d.qualification,
+        d.speciality,
+        d.hospital_name,
+        d.area,
+        d.is_active ? 'Active' : 'Inactive',
+      ]),
+    )
+
   return (
     <div>
       <div className="page-h">
@@ -40,9 +86,14 @@ export function MyDoctorsPage() {
             {n} doctor{n === 1 ? '' : 's'}
           </p>
         </div>
-        <Link to="/m/doctors/new" className="btn btn-primary hidden lg:inline-flex">
-          <UserPlus aria-hidden /> Add doctor
-        </Link>
+        <div className="hidden gap-2 lg:flex">
+          <button className="btn btn-ghost" onClick={exportCsv} disabled={rows.length === 0}>
+            <Download aria-hidden /> Export CSV
+          </button>
+          <Link to="/m/doctors/new" className="btn btn-primary">
+            <UserPlus aria-hidden /> Add doctor
+          </Link>
+        </div>
       </div>
       {n > 0 && (
         <div className="toolbar">
@@ -96,8 +147,29 @@ export function MyDoctorsPage() {
             }
           />
         </div>
+      ) : desktop ? (
+        <DataTable
+          rows={rows}
+          columns={columns}
+          rowKey={(d) => d.id}
+          rowTo={(d) => `/m/doctors/${d.id}`}
+          pageSize={50}
+          actions={(d) => (
+            <>
+              <IconLink
+                to={`/m/request/add?doctor=${d.id}`}
+                label={`Request service for ${d.name}`}
+                icon={ClipboardPlus}
+              />
+              <IconLink to={`/m/doctors/${d.id}`} label={`View ${d.name}`} icon={Eye} />
+              {d.manager_id === profile?.id && (
+                <IconLink to={`/m/doctors/${d.id}/edit`} label={`Edit ${d.name}`} icon={Pencil} />
+              )}
+            </>
+          )}
+        />
       ) : (
-        <div className="lg:grid lg:grid-cols-2 lg:gap-x-3.5 xl:grid-cols-3">
+        <div>
           {rows.map((d) => (
             <section key={d.id} className="glass doc-card">
               <Link to={`/m/doctors/${d.id}`} className="doc-main">

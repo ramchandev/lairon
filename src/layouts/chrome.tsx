@@ -146,6 +146,8 @@ export interface TabItem {
   /** Force the active state (e.g. "More" is active on the pages it leads to). */
   active?: boolean
   badge?: number
+  /** Heading to list this entry under in the desktop sidebar (entries without one follow the previous heading). */
+  group?: string
 }
 
 export function BottomNav({

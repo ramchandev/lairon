@@ -310,3 +310,9 @@ Sales Performance, Field Activity, ROI Report, Doctor Plans, Stockists and Appra
 - The **Headings** tab on Sale Upload is still shown only to ramchandev@gmail.com (any admin can add a heading while mapping columns).
 - Needs migrations 24 and 25 applied in Supabase before the new pages work.
 
+## Manager on a computer
+
+- Below 1024px the manager keeps the phone app (top bar + bottom tabs). From 1024px up he gets the admin-style shell: sidebar **grouped under headings** (Doctors · Requests · Performance · Account, with the draft count on New Request), breadcrumb top bar, full-width pages.
+- **Doctors** (manager home) is now a searchable table on a computer — Doctor, Qualification, Division, Hospital, Area, Phone, Status — with Request service / View / Edit (own doctors only) on each row and **Export CSV**; the phone keeps the cards. My Requests, the performance pages and the forms were already desktop-aware.
+- `TabItem.group` (in `layouts/chrome.tsx`) drives the sidebar headings; Staff has no groups and looks as before.
+

@@ -206,6 +206,11 @@ describe('role apps', () => {
         'Stockists',
         'Profile',
       ])
+      expect(
+        within(side)
+          .getAllByRole('heading', { level: 6 })
+          .map((h) => h.textContent),
+      ).toEqual(['Doctors', 'Requests', 'Performance', 'Account'])
       expect(screen.queryByRole('navigation', { name: 'Primary' })).toBeNull()
     } finally {
       window.matchMedia = real
