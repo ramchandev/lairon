@@ -232,7 +232,7 @@ export function MorePage() {
               </Link>
             )
           })}
-        {/* Not in the approved HTML: the two admin pages added after it was designed. Reachable here and from the sidebar user block. */}
+        {/* Not in the approved HTML: the two admin pages added after it was designed. Reachable here and from the top-bar profile. */}
         <Link
           to="/admin/settings"
           className="glass flex flex-col gap-3 border border-[rgba(255,255,255,.78)] p-4 no-underline"

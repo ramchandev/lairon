@@ -1,10 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { Bell, ChevronRight, LogOut } from 'lucide-react'
 import { useAuth } from '@/app/AuthProvider'
 import { Avatar } from '@/components/Avatar'
 import { ConfirmDialog } from '@/components/ConfirmDialog'
-import { useToast } from '@/components/Toast'
 import { useDashboard } from '@/features/dashboard/api'
 import { cn } from '@/lib/utils'
 import {
@@ -18,18 +17,48 @@ import {
 } from './adminNav'
 import { BottomNav, Brand, TopBar, iconBtn, useRouteChrome } from './chrome'
 
+type Notif = { id: string; href: string; text: string }
+
+function buildNotifs(counts: { requests: number; starter: number; leave: number }): Notif[] {
+  const line = (n: number, singular: string) =>
+    `${n} ${singular}${n === 1 ? '' : 's'} need${n === 1 ? 's' : ''} attention`
+  return (
+    [
+      counts.requests > 0 && {
+        id: 'requests',
+        href: adminHref('service-requests'),
+        text: line(counts.requests, 'service request'),
+      },
+      counts.starter > 0 && {
+        id: 'starter',
+        href: adminHref('starter-packs'),
+        text: line(counts.starter, 'starter pack'),
+      },
+      counts.leave > 0 && {
+        id: 'leave',
+        href: adminHref('trip-duty'),
+        text: line(counts.leave, 'leave request'),
+      },
+    ] as (Notif | false)[]
+  ).filter(Boolean) as Notif[]
+}
+
 /**
- * Admin shell — matches design/lairon-ez-prototype.html: grouped sidebar with pending counts and the signed-in user (≥1024px),
- * a top bar with breadcrumb + notifications, a 5-tab bottom bar with "More" (<1024px), and sub-pages that swap the bottom bar
- * for a back arrow + title.
+ * Admin shell — matches design/lairon-ez-prototype.html: grouped sidebar with pending counts (≥1024px),
+ * a top bar with breadcrumb + notifications + signed-in user, a 5-tab bottom bar with "More" (<1024px),
+ * and sub-pages that swap the bottom bar for a back arrow + title.
  */
 export function AdminLayout() {
   const { profile, signOut } = useAuth()
   const { pathname, search } = useLocation()
-  const toast = useToast()
   const { sub, title } = useRouteChrome()
   const kpi = useDashboard().data
   const [confirmOut, setConfirmOut] = useState(false)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [notifs, setNotifs] = useState<Notif[]>([])
+  const [unread, setUnread] = useState(false)
+  const seeded = useRef(false)
+  const notifRef = useRef<HTMLDivElement>(null)
 
   const root = adminRoot(pathname, search)
   const nav = navFor(profile?.email)
@@ -41,20 +70,40 @@ export function AdminLayout() {
   const name = profile?.full_name ?? 'Admin'
   const navLabel = nav.flatMap((g) => g.items).find((i) => i.root === root)?.label ?? title
 
-  function notify() {
-    const parts = [
-      [counts.requests, 'service requests'],
-      [counts.starter, 'starter packs'],
-      [counts.leave, 'leave requests'],
-    ]
-      .filter(([n]) => Number(n) > 0)
-      .map(([n, l]) => `${n} ${l}`)
-    toast(
-      parts.length
-        ? `${counts.requests + counts.starter + counts.leave} need attention: ${parts.join(', ')}`
-        : 'You’re all caught up',
-    )
+  // Seed the bell once from the dashboard KPI; dismissed items stay gone for this session.
+  useEffect(() => {
+    if (seeded.current || kpi === undefined) return
+    const list = buildNotifs({
+      requests: kpi.pending_service_requests ?? 0,
+      starter: kpi.pending_starter_packs ?? 0,
+      leave: kpi.pending_leave_requests ?? 0,
+    })
+    setNotifs(list)
+    setUnread(list.length > 0)
+    seeded.current = true
+  }, [kpi])
+
+  function closeNotifs() {
+    setNotifOpen(false)
+    setNotifs([])
+    setUnread(false)
   }
+
+  useEffect(() => {
+    if (!notifOpen) return
+    const onPointer = (e: MouseEvent) => {
+      if (!notifRef.current?.contains(e.target as Node)) closeNotifs()
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeNotifs()
+    }
+    document.addEventListener('mousedown', onPointer)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onPointer)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [notifOpen])
 
   if (previewRoots.includes(root) && !canPreview(profile?.email))
     return <Navigate to="/admin" replace />
@@ -96,16 +145,6 @@ export function AdminLayout() {
             })}
           </div>
         ))}
-        <div className="mt-auto flex items-center gap-2.5 rounded-[14px] bg-white/60 p-3">
-          <Avatar name={name} url={profile?.avatar_url} />
-          <Link to="/admin/profile" className="min-w-0 flex-1 no-underline">
-            <div className="truncate text-sm font-bold">{name}</div>
-            <div className="truncate text-[13px] text-muted">{profile?.email}</div>
-          </Link>
-          <button className={iconBtn} aria-label="Sign out" onClick={() => setConfirmOut(true)}>
-            <LogOut className="size-5" strokeWidth={1.9} />
-          </button>
-        </div>
       </aside>
 
       <div className="min-w-0 flex-1">
@@ -122,16 +161,79 @@ export function AdminLayout() {
           }
           right={
             <>
-              <button
-                className={iconBtn}
-                aria-label={`Notifications${counts.requests + counts.starter + counts.leave ? `, ${counts.requests + counts.starter + counts.leave} new` : ''}`}
-                onClick={notify}
-              >
-                <Bell className="size-5" strokeWidth={1.9} />
-                {counts.requests + counts.starter + counts.leave > 0 && (
-                  <span className="absolute top-[9px] right-2.5 size-2 rounded-full border-2 border-[#eef2f8] bg-[#d9480f]" />
+              <div ref={notifRef} className="relative">
+                <button
+                  type="button"
+                  className={iconBtn}
+                  aria-label={`Notifications${unread ? `, ${notifs.length} new` : ''}`}
+                  aria-expanded={notifOpen}
+                  aria-haspopup="true"
+                  onClick={() => {
+                    if (notifOpen) {
+                      closeNotifs()
+                      return
+                    }
+                    setNotifOpen(true)
+                    setUnread(false)
+                  }}
+                >
+                  <Bell className="size-5" strokeWidth={1.9} />
+                  {unread && (
+                    <span className="absolute top-[9px] right-2.5 size-2 rounded-full border-2 border-[#eef2f8] bg-[#d9480f]" />
+                  )}
+                </button>
+                {notifOpen && (
+                  <div
+                    role="menu"
+                    aria-label="Notifications"
+                    className="absolute top-[calc(100%+8px)] right-0 z-40 w-[min(320px,calc(100vw-24px))] overflow-hidden rounded-[14px] border border-line bg-white shadow-[0_16px_40px_rgba(20,32,51,.18)]"
+                  >
+                    <div className="border-b border-line px-3.5 py-2.5 text-[13px] font-bold">
+                      Notifications
+                    </div>
+                    {notifs.length === 0 ? (
+                      <p className="px-3.5 py-4 text-sm text-muted">You’re all caught up</p>
+                    ) : (
+                      <ul className="max-h-[320px] overflow-y-auto py-1">
+                        {notifs.map((n) => (
+                          <li key={n.id}>
+                            <Link
+                              role="menuitem"
+                              to={n.href}
+                              className="block px-3.5 py-2.5 text-sm font-medium text-ink-2 no-underline hover:bg-primary-soft"
+                              onClick={closeNotifs}
+                            >
+                              {n.text}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 )}
-              </button>
+              </div>
+              <div className="hidden items-center gap-2 lg:flex">
+                <Link
+                  to="/admin/profile"
+                  className="flex min-w-0 items-center gap-2.5 rounded-xl px-2 py-1.5 no-underline hover:bg-white/75"
+                >
+                  <Avatar name={name} url={profile?.avatar_url} size={36} />
+                  <div className="min-w-0">
+                    <div className="max-w-[140px] truncate text-sm font-bold">{name}</div>
+                    <div className="max-w-[140px] truncate text-[12px] text-muted">
+                      {profile?.email}
+                    </div>
+                  </div>
+                </Link>
+                <button
+                  type="button"
+                  className={iconBtn}
+                  aria-label="Sign out"
+                  onClick={() => setConfirmOut(true)}
+                >
+                  <LogOut className="size-5" strokeWidth={1.9} />
+                </button>
+              </div>
               <Link to="/admin/more" className={cn(iconBtn, 'lg:hidden')} aria-label="Account">
                 <Avatar name={name} url={profile?.avatar_url} />
               </Link>

@@ -40,7 +40,7 @@ const adminRoutes: RouteObject[] = [
 ]
 
 describe('AdminLayout', () => {
-  it('shows the grouped sidebar with the approved labels, counts and the signed-in user', () => {
+  it('shows the grouped sidebar with the approved labels and counts', () => {
     mount(<AdminLayout />, '/admin', adminRoutes, '/admin')
     const side = screen.getByLabelText('Main navigation')
     expect(
@@ -72,12 +72,43 @@ describe('AdminLayout', () => {
       'Locations',
       'Products',
       'Dropdowns',
-      'Admin Useradmin@lairon.in',
     ])
     expect(within(side).getByRole('link', { name: 'Dashboard', hidden: true })).toHaveAttribute(
       'aria-current',
       'page',
     )
+  })
+
+  it('puts the signed-in user next to notifications in the top bar', () => {
+    mount(<AdminLayout />, '/admin', adminRoutes, '/admin')
+    const header = screen.getByRole('banner')
+    expect(within(header).getByRole('link', { name: /Admin User/ })).toHaveAttribute(
+      'href',
+      '/admin/profile',
+    )
+    expect(within(header).getByRole('button', { name: 'Sign out' })).toBeInTheDocument()
+    expect(within(header).getByRole('button', { name: /Notifications/ })).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Main navigation')).queryByText('Admin User')).toBeNull()
+  })
+
+  it('opens a notification dropdown, marks all read, and clears them on close', async () => {
+    const user = userEvent.setup()
+    mount(<AdminLayout />, '/admin', adminRoutes, '/admin')
+    const bell = screen.getByRole('button', { name: /Notifications, 3 new/ })
+    await user.click(bell)
+    const menu = screen.getByRole('menu', { name: 'Notifications' })
+    expect(within(menu).getByText('3 service requests need attention')).toBeInTheDocument()
+    expect(within(menu).getByText('2 starter packs need attention')).toBeInTheDocument()
+    expect(within(menu).getByText('1 leave request needs attention')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Notifications' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    )
+    await user.click(screen.getByText('Dashboard body'))
+    expect(screen.queryByRole('menu', { name: 'Notifications' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Notifications' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Notifications' }))
+    expect(screen.getByText('You’re all caught up')).toBeInTheDocument()
   })
 
   it('shows the performance modules only to the one preview account', () => {
