@@ -316,3 +316,8 @@ Sales Performance, Field Activity, ROI Report, Doctor Plans, Stockists and Appra
 - **Doctors** (manager home) is now a searchable table on a computer — Doctor, Qualification, Division, Hospital, Area, Phone, Status — with Request service / View / Edit (own doctors only) on each row and **Export CSV**; the phone keeps the cards. My Requests, the performance pages and the forms were already desktop-aware.
 - `TabItem.group` (in `layouts/chrome.tsx`) drives the sidebar headings; Staff has no groups and looks as before.
 
+## Release: all report modules and Appraisal for every super admin
+
+- The last `preview` flags are removed in `src/layouts/adminNav.ts`: **Sales Performance, Field Activity, ROI Report, Doctor Plans and Appraisal** are now visible to every super admin (with Sale Report, Sale Upload and Stockists released earlier). No nav item is test-gated any more.
+- The gate mechanism (`preview` flag, `PREVIEW_EMAIL`, `canPreview`) stays for future modules; today only the **Headings** tab on Sale Upload uses it (ramchandev@gmail.com only).
+

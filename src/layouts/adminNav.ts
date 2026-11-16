@@ -79,24 +79,21 @@ export const ADMIN_NAV: { group: string; items: AdminNavItem[] }[] = [
         root: 'performance',
         label: 'Sales Performance',
         icon: ChartColumn,
-        preview: true,
       },
       {
         key: 'field-activity',
         root: 'field-activity',
         label: 'Field Activity',
         icon: Footprints,
-        preview: true,
       },
-      { key: 'roi', root: 'roi', label: 'ROI Report', icon: Percent, preview: true },
+      { key: 'roi', root: 'roi', label: 'ROI Report', icon: Percent },
       {
         key: 'doctor-plans',
         root: 'doctor-plans',
         label: 'Doctor Plans',
         icon: Target,
-        preview: true,
       },
-      { key: 'appraisal', root: 'appraisal', label: 'Appraisal', icon: Award, preview: true },
+      { key: 'appraisal', root: 'appraisal', label: 'Appraisal', icon: Award },
       {
         key: 'sale-report',
         root: 'sale-report',
@@ -182,7 +179,7 @@ export const adminRoot = (pathname: string, search = '') => {
   )
 }
 
-/** The one account that sees the performance modules while they are tested. Remove the `preview` flags to release them to every admin. */
+/** Test gate: items flagged `preview: true` show only to this account until released (no item is flagged now; the Headings tab on Sale Upload also uses it). */
 export const PREVIEW_EMAIL = 'ramchandev@gmail.com'
 export const canPreview = (email?: string | null) => email?.toLowerCase() === PREVIEW_EMAIL
 export const previewRoots = ADMIN_NAV.flatMap((g) => g.items)

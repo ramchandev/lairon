@@ -59,6 +59,11 @@ describe('AdminLayout', () => {
       'Starter Packs2',
       'Trip Duty1',
       'Revenue Report',
+      'Sales Performance',
+      'Field Activity',
+      'ROI Report',
+      'Doctor Plans',
+      'Appraisal',
       'Sale Report',
       'Sale Upload',
       'Drivers',
@@ -111,39 +116,14 @@ describe('AdminLayout', () => {
     expect(screen.getByText('You’re all caught up')).toBeInTheDocument()
   })
 
-  it('shows the performance modules only to the one preview account', () => {
-    who.email = 'Ramchandev@gmail.com'
-    try {
-      mount(<AdminLayout />, '/admin', adminRoutes, '/admin')
-      const links = within(screen.getByLabelText('Main navigation'))
-        .getAllByRole('link', { hidden: true })
-        .map((a) => a.textContent)
-      expect(links).toEqual(
-        expect.arrayContaining([
-          'Sales Performance',
-          'Field Activity',
-          'ROI Report',
-          'Doctor Plans',
-          'Stockists',
-          'Appraisal',
-          'Sale Report',
-          'Sale Upload',
-        ]),
-      )
-    } finally {
-      who.email = 'admin@lairon.in'
-    }
-  })
-
-  it('sends any other admin away from a preview page', () => {
+  it('every admin gets the report modules and can open Appraisal', () => {
     mount(
       <AdminLayout />,
       '/admin',
       [...adminRoutes, { path: 'appraisal', ...page('Appraisal') }],
       '/admin/appraisal',
     )
-    expect(screen.queryByText('Appraisal body')).toBeNull()
-    expect(screen.getByText('Dashboard body')).toBeInTheDocument()
+    expect(screen.getByText('Appraisal body')).toBeInTheDocument()
   })
 
   it('has a 5-tab bottom bar and marks "More" active on the pages it leads to', () => {
